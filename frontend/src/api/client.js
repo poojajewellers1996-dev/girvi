@@ -36,7 +36,11 @@ const request = async (endpoint, options = {}) => {
     let errorMsg = 'An error occurred';
     try {
         const errorData = await response.json();
-        errorMsg = errorData.detail || errorMsg;
+        if (Array.isArray(errorData.detail)) {
+            errorMsg = errorData.detail.map(d => `${d.loc[d.loc.length-1]}: ${d.msg}`).join(', ');
+        } else {
+            errorMsg = errorData.detail || errorMsg;
+        }
     } catch (e) {
         // Not JSON
     }
