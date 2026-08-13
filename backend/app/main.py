@@ -74,7 +74,7 @@ app.add_middleware(
 
 def get_current_user(request: Request, db: Session = Depends(get_db)) -> dict:
     """Validate Bearer JWT; return token payload."""
-    BYPASS = {"/auth/login", "/auth/request-password-reset", "/auth/verify-otp", "/company/register", "/docs", "/openapi.json", "/redoc"}
+    BYPASS = {"/auth/login", "/auth/request-password-reset", "/auth/verify-otp", "/company/register", "/docs", "/openapi.json", "/redoc", "/auth/send-registration-otp", "/auth/verify-registration-otp"}
     if request.url.path in BYPASS:
         return {}
     auth = request.headers.get("Authorization", "")
