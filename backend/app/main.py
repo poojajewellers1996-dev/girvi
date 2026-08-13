@@ -1,0 +1,224 @@
+import time
+import datetime
+import json
+import base64
+import hmac
+import hashlib
+import secrets
+import uuid
+from typing import List, Optional
+
+from fastapi import FastAPI, Depends, HTTPException, status, Request
+from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.orm import Session
+
+from .config import settings, get_db, engine, Base
+from . import models, schemas, crud
+from .whatsapp_service import WhatsAppClient
+
+# ─── Create all DB tables ─────────────────────────────────────────────────────
+Base.metadata.create_all(bind=engine)
+
+# ─── JWT helpers ──────────────────────────────────────────────────────────────
+
+def _b64_encode(data: bytes) -> str:
+    return base64.urlsafe_b64encode(data).rstrip(b"=").decode()
+
+def _b64_decode(data: str) -> bytes:
+    data += "=" * (4 - len(data) % 4)
+    return base64.urlsafe_b64decode(data)
+
+def create_access_token(subject: str, session_id: Optional[str] = None, expires_in: int = 86400) -> str:
+    header = _b64_encode(json.dumps({"alg": "HS256", "typ": "JWT"}).encode())
+    payload = {"sub": subject, "exp": int(time.time()) + expires_in}
+    if session_id:
+        payload["sid"] = session_id
+    body = _b64_encode(json.dumps(payload).encode())
+    msg = f"{header}.{body}"
+    sig = _b64_encode(hmac.new(settings.SECRET_KEY.encode(), msg.encode(), hashlib.sha256).digest())
+    return f"{msg}.{sig}"
+
+def decode_access_token(token: str) -> Optional[dict]:
+    try:
+        h, b, s = token.split(".")
+        msg = f"{h}.{b}"
+        expected = _b64_encode(hmac.new(settings.SECRET_KEY.encode(), msg.encode(), hashlib.sha256).digest())
+        if not hmac.compare_digest(s, expected):
+            return None
+        payload = json.loads(_b64_decode(b).decode())
+        if payload.get("exp", 0) < time.time():
+            return None
+        return payload
+    except Exception:
+        return None
+
+# ─── FastAPI app ──────────────────────────────────────────────────────────────
+
+app = FastAPI(
+    title="Girvi Management API",
+    description="Backend API for Girvi (pawn) management system",
+    version="1.0.0",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.CORS_ORIGINS,
+    allow_origin_regex=settings.CORS_ORIGIN_REGEX,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# ─── Auth dependency ──────────────────────────────────────────────────────────
+
+def get_current_user(request: Request, db: Session = Depends(get_db)) -> dict:
+    """Validate Bearer JWT; return token payload."""
+    BYPASS = {"/auth/login", "/auth/request-password-reset", "/auth/verify-otp", "/company/register", "/docs", "/openapi.json", "/redoc"}
+    if request.url.path in BYPASS:
+        return {}
+    auth = request.headers.get("Authorization", "")
+    if not auth.startswith("Bearer "):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing token")
+    payload = decode_access_token(auth.split(" ", 1)[1])
+    if not payload:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token")
+    # Touch last_active_at
+    username = payload.get("sub")
+    if username:
+        user = db.query(models.User).filter(models.User.username == username).first()
+        if user:
+            if user.current_session_id != payload.get("sid"):
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="SESSION_SUPERSEDED")
+            user.last_active_at = datetime.datetime.utcnow()
+            db.commit()
+    return payload
+
+# ─── System log helper ────────────────────────────────────────────────────────
+
+def log_system_action(db: Session, action: str, details: str, module: str = "GENERAL"):
+    try:
+        now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        db.add(models.SystemLog(timestamp=now_str, action=action, details=details, module=module))
+        db.commit()
+    except Exception as exc:
+        print(f"[Log Error] {exc}")
+
+# ─── WhatsApp client ──────────────────────────────────────────────────────────
+_wa = WhatsAppClient()
+
+# ─────────────────────────────────────────────────────────────────────────────
+# AUTH ROUTES
+# ─────────────────────────────────────────────────────────────────────────────
+
+@app.post("/auth/login", response_model=schemas.TokenResponse)
+def login(data: schemas.LoginRequest, db: Session = Depends(get_db)):
+    user = crud.get_user_by_username(db, data.username)
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    authenticated = False
+    if data.password:
+        authenticated = crud.verify_password(data.password, user.password_hash)
+    elif data.pin:
+        authenticated = crud.verify_password(data.pin, user.pin_hash)
+    if not authenticated:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    sid = str(uuid.uuid4())
+    user.current_session_id = sid
+    user.last_active_at = datetime.datetime.utcnow()
+    db.commit()
+    token = create_access_token(user.username, session_id=sid)
+    log_system_action(db, "USER_LOGIN", f"User {user.username} logged in", module="AUTH")
+    return schemas.TokenResponse(access_token=token)
+
+
+@app.post("/auth/reset-pin")
+def reset_pin(username: str, new_pin: str, password: str, db: Session = Depends(get_db)):
+    user = crud.get_user_by_username(db, username)
+    if not user or not crud.verify_password(password, user.password_hash):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    crud.set_user_pin(db, user, new_pin)
+    log_system_action(db, "PIN_RESET", f"PIN reset for {username}", module="AUTH")
+    return {"status": "pin reset successful"}
+
+
+@app.post("/auth/request-password-reset")
+def request_password_reset(body: schemas.OTPRequest, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.phone == body.phone).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Phone not registered")
+    code = f"{secrets.randbelow(1000000):06d}"
+    crud.create_otp(db, user, code)
+    _wa.send_otp(body.phone, code)
+    return {"status": "OTP sent"}
+
+
+@app.post("/auth/verify-otp")
+def verify_otp_and_reset(body: schemas.OTPVerify, new_password: str, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.phone == body.phone).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Phone not found")
+    otp = crud.get_valid_otp(db, user, body.code)
+    if not otp:
+        raise HTTPException(status_code=400, detail="Invalid or expired OTP")
+    crud.set_user_password(db, user, new_password)
+    crud.mark_otp_used(db, otp)
+    log_system_action(db, "PASSWORD_RESET", f"Password reset via OTP for {user.username}", module="AUTH")
+    return {"status": "password reset successful"}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# COMPANY REGISTRATION
+# ─────────────────────────────────────────────────────────────────────────────
+
+@app.post("/company/register")
+def register_company(data: schemas.CompanyRegister, db: Session = Depends(get_db)):
+    if crud.get_user_by_username(db, data.mobile):
+        raise HTTPException(status_code=400, detail="Mobile already registered")
+    admin = crud.create_user(db, username=data.mobile, password=data.password, pin=data.pin, phone=data.mobile)
+    company = crud.create_company(db, admin, data)
+    log_system_action(db, "COMPANY_REGISTER", f"New company: {data.name}", module="SETUP")
+    return {"company_id": company.id, "admin_user_id": admin.id, "username": admin.username}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# GIRVI ROUTES  (protected)
+# ─────────────────────────────────────────────────────────────────────────────
+
+@app.post("/girvi", response_model=schemas.GirviRead)
+def create_girvi(
+    girvi: schemas.GirviCreate,
+    db: Session = Depends(get_db),
+    token: dict = Depends(get_current_user),
+):
+    new_girvi = crud.create_girvi(db, girvi, owner_user_id=0)
+    log_system_action(db, "GIRVI_CREATE", f"New Girvi #{girvi.pledge_no} for {girvi.customer_name}", module="GIRVI")
+    return schemas.GirviRead.model_validate(new_girvi)
+
+
+@app.get("/girvi", response_model=List[schemas.GirviRead])
+def list_girvis(
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db),
+    token: dict = Depends(get_current_user),
+):
+    return [schemas.GirviRead.model_validate(g) for g in crud.list_girvis(db, skip, limit)]
+
+
+@app.get("/girvi/{girvi_id}", response_model=schemas.GirviRead)
+def get_girvi(
+    girvi_id: int,
+    db: Session = Depends(get_db),
+    token: dict = Depends(get_current_user),
+):
+    g = crud.get_girvi(db, girvi_id)
+    if not g:
+        raise HTTPException(status_code=404, detail="Girvi not found")
+    return schemas.GirviRead.model_validate(g)
+
+# ─────────────────────────────────────────────────────────────────────────────
+# WHATSAPP STUB
+# ─────────────────────────────────────────────────────────────────────────────
+
+@app.post("/whatsapp/send")
+def send_whatsapp(to: str, message: str, token: dict = Depends(get_current_user)):
+    _wa.send_message(to, message)
+    return {"status": "sent"}
