@@ -17,8 +17,15 @@ from . import models, schemas, crud
 from .whatsapp_service import WhatsAppClient
 from twilio.rest import Client
 
+from sqlalchemy import text
 # ─── Create all DB tables ─────────────────────────────────────────────────────
 Base.metadata.create_all(bind=engine)
+
+try:
+    with engine.begin() as conn:
+        conn.execute(text("ALTER TABLE girvis ADD COLUMN monthly_income FLOAT;"))
+except Exception:
+    pass
 
 # ─── JWT helpers ──────────────────────────────────────────────────────────────
 
