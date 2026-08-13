@@ -82,5 +82,6 @@ export const api = {
     method: 'POST',
     body: JSON.stringify(data)
   }),
-  getCustomerByMobile: (mobile) => request(`/customer/${encodeURIComponent(mobile)}`)
+  getCustomerByMobile: (mobile) => request(`/customer/${encodeURIComponent(mobile)}`),
+  getGirviStats: () => request('/girvi/stats')
 };

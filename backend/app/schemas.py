@@ -93,6 +93,7 @@ class GirviCreate(BaseModel):
     loan_amount: Optional[float] = None
     loan_amount_words: Optional[str] = None
     monthly_income: Optional[float] = None
+    status: Optional[str] = "Active"
     articles: List[ArticleCreate]
 
 class GirviRead(BaseModel):
@@ -110,6 +111,7 @@ class GirviRead(BaseModel):
     loan_amount: Optional[float] = None
     loan_amount_words: Optional[str] = None
     monthly_income: Optional[float] = None
+    status: Optional[str] = "Active"
     articles: List[ArticleRead] = []
 
     model_config = {"from_attributes": True}

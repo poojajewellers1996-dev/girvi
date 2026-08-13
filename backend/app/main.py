@@ -27,6 +27,12 @@ try:
 except Exception:
     pass
 
+try:
+    with engine.begin() as conn:
+        conn.execute(text("ALTER TABLE girvis ADD COLUMN status VARCHAR DEFAULT 'Active';"))
+except Exception:
+    pass
+
 # ─── JWT helpers ──────────────────────────────────────────────────────────────
 
 def _b64_encode(data: bytes) -> str:
@@ -235,6 +241,26 @@ def list_girvis(
 ):
     return [schemas.GirviRead.model_validate(g) for g in crud.list_girvis(db, skip, limit)]
 
+@app.get("/girvi/stats")
+def get_girvi_stats(db: Session = Depends(get_db), token: dict = Depends(get_current_user)):
+    from sqlalchemy import func
+    
+    total_girvis = db.query(func.count(models.Girvi.id)).scalar() or 0
+    active_girvis = db.query(func.count(models.Girvi.id)).filter(models.Girvi.status == 'Active').scalar() or 0
+    released_girvis = db.query(func.count(models.Girvi.id)).filter(models.Girvi.status == 'Released').scalar() or 0
+    
+    total_loan_amount = db.query(func.sum(models.Girvi.loan_amount)).scalar() or 0
+    active_loan_amount = db.query(func.sum(models.Girvi.loan_amount)).filter(models.Girvi.status == 'Active').scalar() or 0
+    released_loan_amount = db.query(func.sum(models.Girvi.loan_amount)).filter(models.Girvi.status == 'Released').scalar() or 0
+
+    return {
+        "total_girvis": total_girvis,
+        "active_girvis": active_girvis,
+        "released_girvis": released_girvis,
+        "total_loan_amount": total_loan_amount,
+        "active_loan_amount": active_loan_amount,
+        "released_loan_amount": released_loan_amount
+    }
 
 @app.get("/girvi/{girvi_id}", response_model=schemas.GirviRead)
 def get_girvi(

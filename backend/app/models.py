@@ -56,6 +56,7 @@ class Girvi(Base):
     loan_amount = Column(Float, nullable=True)
     loan_amount_words = Column(String, nullable=True)
     monthly_income = Column(Float, nullable=True)
+    status = Column(String, default="Active")
     articles = relationship("Article", back_populates="girvi", cascade="all, delete-orphan")
 
 
