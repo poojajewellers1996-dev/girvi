@@ -62,8 +62,24 @@ class SystemLogRead(BaseModel):
     timestamp: str
     action: str
     details: str
-    module: str
-    user_name: str
+    user_name: Optional[str] = None
+    module: Optional[str] = None
+    model_config = {"from_attributes": True}
+
+# ─── Ledger Transactions ──────────────────────────────────────────────────────
+
+class TransactionCreate(BaseModel):
+    transaction_type: str = Field(..., description="PRINCIPAL_PAYMENT, INTEREST_PAID, or TOPUP")
+    amount: float
+    remarks: Optional[str] = None
+
+class TransactionRead(BaseModel):
+    id: int
+    girvi_id: int
+    transaction_type: str
+    amount: float
+    transaction_date: datetime
+    remarks: Optional[str] = None
     model_config = {"from_attributes": True}
 # ─── Girvi Articles ────────────────────────────────────────────────────────────
 

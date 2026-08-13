@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../api/client';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Eye, Loader2, Calendar, Trash2, Edit, Unlock, IndianRupee, X, Search } from 'lucide-react';
+import { Plus, Eye, Loader2, Calendar, Trash2, Edit, Unlock, NotebookTabs, X, Search } from 'lucide-react';
+import LedgerModal from '../components/LedgerModal';
 
 export default function Ledger() {
   const [girvis, setGirvis] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [showPartPaymentModal, setShowPartPaymentModal] = useState(false);
-  const [activeGirviId, setActiveGirviId] = useState(null);
-  const [partPaymentAmount, setPartPaymentAmount] = useState('');
+  
+  // New Ledger state
+  const [showLedgerModal, setShowLedgerModal] = useState(false);
+  const [activeGirvi, setActiveGirvi] = useState(null);
+  
   const [actionLoading, setActionLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
@@ -70,25 +73,6 @@ export default function Ledger() {
       fetchGirvis();
     } catch (err) {
       setError(err.message || 'Failed to release Girvi');
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const handlePartPaymentSubmit = async () => {
-    if (!partPaymentAmount || isNaN(partPaymentAmount) || Number(partPaymentAmount) <= 0) {
-      alert("Please enter a valid amount");
-      return;
-    }
-    try {
-      setActionLoading(true);
-      await api.partPaymentGirvi(activeGirviId, Number(partPaymentAmount));
-      setShowPartPaymentModal(false);
-      setPartPaymentAmount('');
-      setActiveGirviId(null);
-      fetchGirvis();
-    } catch (err) {
-      setError(err.message || 'Failed to record part payment');
     } finally {
       setActionLoading(false);
     }
@@ -212,11 +196,11 @@ export default function Ledger() {
                             <button 
                               className="btn btn-secondary" 
                               style={{ padding: '0.5rem', color: '#10b981' }} 
-                              title="Part Payment"
-                              onClick={() => { setActiveGirviId(girvi.id); setShowPartPaymentModal(true); }}
+                              title="Ledger (Transactions)"
+                              onClick={() => { setActiveGirvi(girvi); setShowLedgerModal(true); }}
                               disabled={actionLoading}
                             >
-                              <IndianRupee size={18} />
+                              <NotebookTabs size={18} />
                             </button>
                             <button 
                               className="btn btn-secondary" 
@@ -248,35 +232,13 @@ export default function Ledger() {
         </div>
       </div>
 
-      {/* Part Payment Modal */}
-      {showPartPaymentModal && (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
-          <div className="card" style={{ width: '90%', maxWidth: '400px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <h3 style={{ margin: 0 }}>Record Part Payment</h3>
-              <button onClick={() => setShowPartPaymentModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
-                <X size={20} />
-              </button>
-            </div>
-            <div className="input-group">
-              <label className="input-label">Amount Paid (₹)</label>
-              <input 
-                type="number" 
-                className="input-field" 
-                value={partPaymentAmount}
-                onChange={(e) => setPartPaymentAmount(e.target.value)}
-                placeholder="Enter amount"
-                autoFocus
-              />
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '1.5rem' }}>
-              <button className="btn btn-secondary" onClick={() => setShowPartPaymentModal(false)}>Cancel</button>
-              <button className="btn btn-primary" onClick={handlePartPaymentSubmit} disabled={actionLoading}>
-                {actionLoading ? <Loader2 className="spin" size={16} /> : 'Save Payment'}
-              </button>
-            </div>
-          </div>
-        </div>
+      {/* Ledger Modal */}
+      {showLedgerModal && activeGirvi && (
+        <LedgerModal 
+          girvi={activeGirvi} 
+          onClose={() => setShowLedgerModal(false)}
+          onUpdate={fetchGirvis}
+        />
       )}
     </div>
   );

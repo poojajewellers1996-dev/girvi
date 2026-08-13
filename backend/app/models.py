@@ -103,3 +103,15 @@ class SystemLog(Base):
     details = Column(Text, nullable=False)
     module = Column(String, default="GENERAL")
     user_name = Column(String, default="system")
+
+
+class LedgerTransaction(Base):
+    __tablename__ = "ledger_transactions"
+    id = Column(Integer, primary_key=True, index=True)
+    girvi_id = Column(Integer, ForeignKey("girvis.id", ondelete="CASCADE"), nullable=False)
+    transaction_type = Column(String, nullable=False) # 'PRINCIPAL_PAYMENT', 'INTEREST_PAID', 'TOPUP'
+    amount = Column(Float, nullable=False)
+    transaction_date = Column(DateTime, server_default=func.now())
+    remarks = Column(Text, nullable=True)
+    
+    girvi = relationship("Girvi", backref="transactions")

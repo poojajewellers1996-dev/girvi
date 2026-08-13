@@ -348,6 +348,38 @@ def get_customer_by_mobile(
     return schemas.GirviRead.model_validate(g)
 
 # ─────────────────────────────────────────────────────────────────────────────
+# LEDGER TRANSACTIONS
+# ─────────────────────────────────────────────────────────────────────────────
+
+@app.get("/girvi/{girvi_id}/transactions", response_model=List[schemas.TransactionRead])
+def get_transactions(
+    girvi_id: int,
+    db: Session = Depends(get_db),
+    token: dict = Depends(get_current_user),
+):
+    # Verify girvi exists
+    girvi = crud.get_girvi(db, girvi_id)
+    if not girvi:
+        raise HTTPException(status_code=404, detail="Girvi not found")
+    transactions = crud.get_transactions(db, girvi_id)
+    return [schemas.TransactionRead.model_validate(t) for t in transactions]
+
+@app.post("/girvi/{girvi_id}/transactions", response_model=schemas.TransactionRead)
+def create_transaction(
+    girvi_id: int,
+    transaction: schemas.TransactionCreate,
+    db: Session = Depends(get_db),
+    token: dict = Depends(get_current_user),
+):
+    girvi = crud.get_girvi(db, girvi_id)
+    if not girvi:
+        raise HTTPException(status_code=404, detail="Girvi not found")
+    
+    new_t = crud.create_transaction(db, girvi_id, transaction)
+    log_system_action(db, "LEDGER_TRANSACTION", f"Added {transaction.transaction_type} of ₹{transaction.amount} on Girvi #{girvi.pledge_no}", module="GIRVI")
+    return schemas.TransactionRead.model_validate(new_t)
+
+# ─────────────────────────────────────────────────────────────────────────────
 # WHATSAPP STUB
 # ─────────────────────────────────────────────────────────────────────────────
 

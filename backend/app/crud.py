@@ -201,13 +201,31 @@ def update_girvi_status(db: Session, girvi_id: int, status: str):
         db.refresh(girvi)
     return girvi
 
+from .models import LedgerTransaction
+
 def part_payment_girvi(db: Session, girvi_id: int, amount: float):
+    # Legacy - unused in UI, kept for compatibility if needed.
     girvi = get_girvi(db, girvi_id)
     if girvi and girvi.loan_amount >= amount:
         girvi.loan_amount -= amount
         db.commit()
         db.refresh(girvi)
     return girvi
+
+def create_transaction(db: Session, girvi_id: int, transaction_data: schemas.TransactionCreate):
+    transaction = LedgerTransaction(
+        girvi_id=girvi_id,
+        transaction_type=transaction_data.transaction_type,
+        amount=transaction_data.amount,
+        remarks=transaction_data.remarks
+    )
+    db.add(transaction)
+    db.commit()
+    db.refresh(transaction)
+    return transaction
+
+def get_transactions(db: Session, girvi_id: int):
+    return db.query(LedgerTransaction).filter(LedgerTransaction.girvi_id == girvi_id).order_by(LedgerTransaction.id.asc()).all()
 
 def update_girvi(db: Session, girvi_id: int, girvi_data: schemas.GirviCreate):
     girvi = get_girvi(db, girvi_id)

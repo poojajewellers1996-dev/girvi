@@ -105,6 +105,13 @@ export const api = {
   getCustomerByMobile: (mobile) => request(`/customer/${encodeURIComponent(mobile)}`),
   getGirviStats: () => request('/girvi/stats'),
   
+  // Ledger Transactions
+  getTransactions: (girviId) => request(`/girvi/${girviId}/transactions`),
+  addTransaction: (girviId, data) => request(`/girvi/${girviId}/transactions`, {
+    method: 'POST',
+    body: JSON.stringify(data)
+  }),
+  
   // Settings & Logs
   getLogs: () => request('/logs'),
   getCompany: () => request('/company'),
