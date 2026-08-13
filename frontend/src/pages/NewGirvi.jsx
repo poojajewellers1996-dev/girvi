@@ -144,25 +144,25 @@ export default function NewGirvi() {
         <div className="card" style={{ marginBottom: '1.5rem' }}>
           <h3 style={{ marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>Customer Details</h3>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1rem' }}>
-            <div className="form-group">
-              <label>Pledge No *</label>
-              <input type="text" name="pledge_no" className="input" value={girviData.pledge_no} onChange={handleGirviChange} required />
+            <div className="input-group">
+              <label className="input-label">Pledge No *</label>
+              <input type="text" name="pledge_no" className="input-field" value={girviData.pledge_no} onChange={handleGirviChange} required />
             </div>
-            <div className="form-group">
-              <label>Pledge Date *</label>
-              <input type="date" name="pledge_date" className="input" value={girviData.pledge_date} onChange={handleGirviChange} required />
+            <div className="input-group">
+              <label className="input-label">Pledge Date *</label>
+              <input type="date" name="pledge_date" className="input-field" value={girviData.pledge_date} onChange={handleGirviChange} required />
             </div>
-            <div className="form-group">
-              <label>Due Date *</label>
-              <input type="date" name="due_date" className="input" value={girviData.due_date} onChange={handleGirviChange} required />
+            <div className="input-group">
+              <label className="input-label">Due Date *</label>
+              <input type="date" name="due_date" className="input-field" value={girviData.due_date} onChange={handleGirviChange} required />
             </div>
-            <div className="form-group">
-              <label>Customer Name *</label>
-              <input type="text" name="customer_name" className="input" value={girviData.customer_name} onChange={handleGirviChange} required />
+            <div className="input-group">
+              <label className="input-label">Customer Name *</label>
+              <input type="text" name="customer_name" className="input-field" value={girviData.customer_name} onChange={handleGirviChange} required />
             </div>
-            <div className="form-group">
-              <label>Relation Type</label>
-              <select name="relation_type" className="input" value={girviData.relation_type} onChange={handleGirviChange}>
+            <div className="input-group">
+              <label className="input-label">Relation Type</label>
+              <select name="relation_type" className="input-field" value={girviData.relation_type} onChange={handleGirviChange}>
                 <option value="">Select...</option>
                 <option value="S/O">S/O</option>
                 <option value="D/O">D/O</option>
@@ -170,17 +170,17 @@ export default function NewGirvi() {
                 <option value="C/O">C/O</option>
               </select>
             </div>
-            <div className="form-group">
-              <label>Relation Name</label>
-              <input type="text" name="relation_name" className="input" value={girviData.relation_name} onChange={handleGirviChange} />
+            <div className="input-group">
+              <label className="input-label">Relation Name</label>
+              <input type="text" name="relation_name" className="input-field" value={girviData.relation_name} onChange={handleGirviChange} />
             </div>
-            <div className="form-group">
-              <label>Mobile Number</label>
-              <input type="text" name="mobile_number" className="input" placeholder="10-digit number" value={girviData.mobile_number} onChange={handleGirviChange} />
+            <div className="input-group">
+              <label className="input-label">Mobile Number</label>
+              <input type="text" name="mobile_number" className="input-field" placeholder="10-digit number" value={girviData.mobile_number} onChange={handleGirviChange} />
             </div>
-            <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-              <label>Address</label>
-              <textarea name="address" className="input" value={girviData.address} onChange={handleGirviChange} rows="2"></textarea>
+            <div className="input-group" style={{ gridColumn: '1 / -1' }}>
+              <label className="input-label">Address</label>
+              <textarea name="address" className="input-field" value={girviData.address} onChange={handleGirviChange} rows="2"></textarea>
             </div>
           </div>
         </div>
@@ -202,37 +202,37 @@ export default function NewGirvi() {
               )}
               <h4 style={{ marginTop: 0, marginBottom: '1rem' }}>Article #{index + 1}</h4>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-                <div className="form-group">
-                  <label>Name *</label>
-                  <input type="text" name="name" className="input" value={article.name} onChange={(e) => handleArticleChange(index, e)} required />
+                <div className="input-group">
+                  <label className="input-label">Name *</label>
+                  <input type="text" name="name" className="input-field" value={article.name} onChange={(e) => handleArticleChange(index, e)} required />
                 </div>
-                <div className="form-group">
-                  <label>Quantity *</label>
-                  <input type="number" name="quantity" className="input" min="1" value={article.quantity} onChange={(e) => handleArticleChange(index, e)} required />
+                <div className="input-group">
+                  <label className="input-label">Quantity *</label>
+                  <input type="number" name="quantity" className="input-field" min="1" value={article.quantity} onChange={(e) => handleArticleChange(index, e)} required />
                 </div>
-                <div className="form-group">
-                  <label>Gross Wt (g) *</label>
-                  <input type="number" step="0.001" name="gross_wt" className="input" value={article.gross_wt} onChange={(e) => handleArticleChange(index, e)} required />
+                <div className="input-group">
+                  <label className="input-label">Gross Wt (g) *</label>
+                  <input type="number" step="0.001" name="gross_wt" className="input-field" value={article.gross_wt} onChange={(e) => handleArticleChange(index, e)} required />
                 </div>
-                <div className="form-group">
-                  <label>Less Wt (g)</label>
-                  <input type="number" step="0.001" name="less_wt" className="input" value={article.less_wt} onChange={(e) => handleArticleChange(index, e)} />
+                <div className="input-group">
+                  <label className="input-label">Less Wt (g)</label>
+                  <input type="number" step="0.001" name="less_wt" className="input-field" value={article.less_wt} onChange={(e) => handleArticleChange(index, e)} />
                 </div>
-                <div className="form-group">
-                  <label>Net Wt (g)</label>
-                  <input type="number" step="0.001" name="net_wt" className="input" value={article.net_wt} readOnly style={{ backgroundColor: 'var(--bg-primary)', cursor: 'not-allowed' }} />
+                <div className="input-group">
+                  <label className="input-label">Net Wt (g)</label>
+                  <input type="number" step="0.001" name="net_wt" className="input-field" value={article.net_wt} readOnly style={{ backgroundColor: 'var(--bg-primary)', cursor: 'not-allowed' }} />
                 </div>
-                <div className="form-group">
-                  <label>Present Value (₹) *</label>
-                  <input type="number" step="0.01" name="present_value" className="input" value={article.present_value} onChange={(e) => handleArticleChange(index, e)} required />
+                <div className="input-group">
+                  <label className="input-label">Present Value (₹) *</label>
+                  <input type="number" step="0.01" name="present_value" className="input-field" value={article.present_value} onChange={(e) => handleArticleChange(index, e)} required />
                 </div>
-                <div className="form-group">
-                  <label>Loan Amount (₹) *</label>
-                  <input type="number" step="0.01" name="loan_amount" className="input" value={article.loan_amount} onChange={(e) => handleArticleChange(index, e)} required />
+                <div className="input-group">
+                  <label className="input-label">Loan Amount (₹) *</label>
+                  <input type="number" step="0.01" name="loan_amount" className="input-field" value={article.loan_amount} onChange={(e) => handleArticleChange(index, e)} required />
                 </div>
-                <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                  <label>Loan Amount (Words)</label>
-                  <input type="text" name="loan_amount_words" className="input" value={article.loan_amount_words} onChange={(e) => handleArticleChange(index, e)} placeholder="e.g. Ten Thousand Only" />
+                <div className="input-group" style={{ gridColumn: '1 / -1' }}>
+                  <label className="input-label">Loan Amount (Words)</label>
+                  <input type="text" name="loan_amount_words" className="input-field" value={article.loan_amount_words} onChange={(e) => handleArticleChange(index, e)} placeholder="e.g. Ten Thousand Only" />
                 </div>
               </div>
             </div>
