@@ -5,7 +5,13 @@ import Register from './pages/Register';
 import ResetPassword from './pages/ResetPassword';
 import ResetPin from './pages/ResetPin';
 import Dashboard from './pages/Dashboard';
-import Navbar from './components/Navbar';
+import Layout from './components/Layout';
+import NewGirvi from './pages/NewGirvi';
+import ExistingGirvi from './pages/ExistingGirvi';
+import Ledger from './pages/Ledger';
+import RePledge from './pages/RePledge';
+import SystemLogs from './pages/SystemLogs';
+import Settings from './pages/Settings';
 
 const PrivateRoute = ({ children }) => {
   const token = getAuthToken();
@@ -25,13 +31,18 @@ function App() {
             path="/" 
             element={
               <PrivateRoute>
-                <>
-                  <Navbar />
-                  <Dashboard />
-                </>
+                <Layout />
               </PrivateRoute>
-            } 
-          />
+            }
+          >
+            <Route index element={<Dashboard />} />
+            <Route path="girvi/new" element={<NewGirvi />} />
+            <Route path="girvi/existing" element={<ExistingGirvi />} />
+            <Route path="ledger" element={<Ledger />} />
+            <Route path="re-pledge" element={<RePledge />} />
+            <Route path="logs" element={<SystemLogs />} />
+            <Route path="settings" element={<Settings />} />
+          </Route>
           {/* Catch all */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
