@@ -181,8 +181,10 @@ def get_girvi(db: Session, girvi_id: int) -> Optional[Girvi]:
 def list_girvis(db: Session, skip: int = 0, limit: int = 100):
     return db.query(Girvi).order_by(Girvi.id.desc()).offset(skip).limit(limit).all()
 
+from sqlalchemy.orm import joinedload
+
 def list_repledges(db: Session):
-    return db.query(Repledge).order_by(Repledge.id.desc()).all()
+    return db.query(Repledge).options(joinedload(Repledge.girvis)).order_by(Repledge.id.desc()).all()
 
 def delete_girvi(db: Session, girvi_id: int):
     girvi = get_girvi(db, girvi_id)

@@ -87,9 +87,18 @@ class RepledgeCreate(BaseModel):
     date_of_loan: datetime
     amount: float
 
+class GirviSummary(BaseModel):
+    id: int
+    pledge_no: str
+    customer_name: str
+    loan_amount: Optional[float] = None
+    present_value: Optional[float] = None
+    model_config = {"from_attributes": True}
+
 class RepledgeRead(RepledgeCreate):
     id: int
     created_at: datetime
+    girvis: List[GirviSummary] = []
     model_config = {"from_attributes": True}
 
 
