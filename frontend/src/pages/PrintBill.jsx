@@ -132,12 +132,12 @@ export default function PrintBill() {
         </div>
         <div style={{ flex: 2, border: '1px solid #000', borderRadius: '8px', padding: '6px' }}>
           <div style={{ fontSize: '10px', fontWeight: 'bold', marginBottom: '4px' }}>RUPEES IN WORDS</div>
-          <div style={{ fontSize: '14px', fontWeight: 'bold', fontStyle: 'italic' }}>{girvi.loan_amount_words} Only</div>
+          <div style={{ fontSize: '14px', fontWeight: 'bold', fontStyle: 'italic' }}>{numberToWords(girvi.loan_amount)} Only</div>
         </div>
       </div>
 
       <div style={{ fontSize: '10px', fontWeight: 'bold', fontStyle: 'italic', marginBottom: '4px' }}>
-        Rate of interest {girvi.loan_amount_words ? 'As agreed' : 'Fourteen percent per annum'} &nbsp;&nbsp;&nbsp; Time of redemption 12 months
+        Rate of interest Fourteen percent per annum &nbsp;&nbsp;&nbsp; Time of redemption 12 months
       </div>
       <div style={{ fontSize: '10px', fontStyle: 'italic', marginBottom: '4px' }}>
         The following article / articles is / are pawned with me / us
