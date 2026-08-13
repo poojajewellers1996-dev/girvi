@@ -53,6 +53,7 @@ class ArticleCreate(BaseModel):
     present_value: float = Field(..., gt=0)
     loan_amount: float = Field(..., gt=0)
     loan_amount_words: str
+    photo_path: Optional[str] = None
 
     @field_validator("net_wt")
     @classmethod
@@ -73,6 +74,7 @@ class ArticleRead(BaseModel):
     present_value: float
     loan_amount: float
     loan_amount_words: str
+    photo_path: Optional[str] = None
 
     model_config = {"from_attributes": True}
 

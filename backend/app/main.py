@@ -33,6 +33,12 @@ try:
 except Exception:
     pass
 
+try:
+    with engine.begin() as conn:
+        conn.execute(text("ALTER TABLE articles ADD COLUMN photo_path TEXT;"))
+except Exception:
+    pass
+
 # ─── JWT helpers ──────────────────────────────────────────────────────────────
 
 def _b64_encode(data: bytes) -> str:

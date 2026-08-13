@@ -72,6 +72,7 @@ class Article(Base):
     present_value = Column(Float, nullable=False)
     loan_amount = Column(Float, nullable=False)
     loan_amount_words = Column(String, nullable=False)
+    photo_path = Column(Text, nullable=True)
     girvi = relationship("Girvi", back_populates="articles")
 
 

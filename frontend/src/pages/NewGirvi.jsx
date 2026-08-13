@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../api/client';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Trash2, Save, ArrowLeft } from 'lucide-react';
+import { Plus, Trash2, Save, ArrowLeft, Camera } from 'lucide-react';
 
 export default function NewGirvi() {
   const navigate = useNavigate();
@@ -21,6 +21,7 @@ export default function NewGirvi() {
     present_value: 0,
     loan_amount: 0,
     loan_amount_words: '',
+    photo_path: '',
   });
 
   const [articles, setArticles] = useState([
@@ -33,6 +34,7 @@ export default function NewGirvi() {
       present_value: 0,
       loan_amount: 0,
       loan_amount_words: '',
+      photo_path: '',
     }
   ]);
 
@@ -107,6 +109,41 @@ export default function NewGirvi() {
     if (articles.length > 1) {
       setArticles(articles.filter((_, i) => i !== index));
     }
+  };
+
+  const handleImageUpload = (file, callback) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 800;
+        const MAX_HEIGHT = 800;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+        callback(dataUrl);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleSubmit = async (e) => {
@@ -213,6 +250,25 @@ export default function NewGirvi() {
               <label className="input-label">Address</label>
               <textarea name="address" className="input-field" value={girviData.address} onChange={handleGirviChange} rows="2"></textarea>
             </div>
+            <div className="input-group" style={{ gridColumn: '1 / -1' }}>
+              <label className="input-label">Customer Photo</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                <label className="btn btn-secondary" style={{ cursor: 'pointer' }}>
+                  <Camera size={18} />
+                  {girviData.photo_path ? 'Change Photo' : 'Upload Photo'}
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    capture="environment"
+                    style={{ display: 'none' }} 
+                    onChange={(e) => handleImageUpload(e.target.files[0], (data) => setGirviData(prev => ({ ...prev, photo_path: data })))} 
+                  />
+                </label>
+                {girviData.photo_path && (
+                  <img src={girviData.photo_path} alt="Customer" style={{ height: '50px', width: '50px', objectFit: 'cover', borderRadius: '4px', border: '1px solid var(--border)' }} />
+                )}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -262,8 +318,31 @@ export default function NewGirvi() {
                   <input type="number" step="0.01" name="loan_amount" className="input-field" value={article.loan_amount} onChange={(e) => handleArticleChange(index, e)} required />
                 </div>
                 <div className="input-group" style={{ gridColumn: '1 / -1' }}>
-                  <label className="input-label">Loan Amount (Words)</label>
-                  <input type="text" name="loan_amount_words" className="input-field" value={article.loan_amount_words} onChange={(e) => handleArticleChange(index, e)} placeholder="e.g. Ten Thousand Only" />
+                  <label className="input-label">Loan Amount Words</label>
+                  <input type="text" name="loan_amount_words" className="input-field" value={article.loan_amount_words} onChange={(e) => handleArticleChange(index, e)} />
+                </div>
+                <div className="input-group" style={{ gridColumn: '1 / -1' }}>
+                  <label className="input-label">Item Photo</label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <label className="btn btn-secondary" style={{ cursor: 'pointer' }}>
+                      <Camera size={18} />
+                      {article.photo_path ? 'Change Item Photo' : 'Upload Item Photo'}
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        capture="environment"
+                        style={{ display: 'none' }} 
+                        onChange={(e) => handleImageUpload(e.target.files[0], (data) => {
+                          const newArticles = [...articles];
+                          newArticles[index].photo_path = data;
+                          setArticles(newArticles);
+                        })} 
+                      />
+                    </label>
+                    {article.photo_path && (
+                      <img src={article.photo_path} alt="Item" style={{ height: '50px', width: '50px', objectFit: 'cover', borderRadius: '4px', border: '1px solid var(--border)' }} />
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
