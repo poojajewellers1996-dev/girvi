@@ -8,7 +8,7 @@ from typing import Optional
 from sqlalchemy.orm import Session
 from . import models, schemas, config
 from .config import settings
-from .models import User, OTP, Company, Girvi, Article
+from .models import User, OTP, Company, Girvi, Article, Repledge, SystemLog
 from .schemas import (
     LoginRequest,
     TokenResponse,
