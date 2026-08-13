@@ -7,7 +7,6 @@ import ResetPin from './pages/ResetPin';
 import Dashboard from './pages/Dashboard';
 import Layout from './components/Layout';
 import NewGirvi from './pages/NewGirvi';
-import ExistingGirvi from './pages/ExistingGirvi';
 import Ledger from './pages/Ledger';
 import RePledge from './pages/RePledge';
 import SystemLogs from './pages/SystemLogs';
@@ -37,7 +36,6 @@ function App() {
           >
             <Route index element={<Dashboard />} />
             <Route path="girvi/new" element={<NewGirvi />} />
-            <Route path="girvi/existing" element={<ExistingGirvi />} />
             <Route path="ledger" element={<Ledger />} />
             <Route path="re-pledge" element={<RePledge />} />
             <Route path="logs" element={<SystemLogs />} />

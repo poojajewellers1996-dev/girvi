@@ -5,7 +5,6 @@ export default function Sidebar() {
   const navItems = [
     { name: 'Dashboard', path: '/', icon: LayoutDashboard },
     { name: 'New Girvi', path: '/girvi/new', icon: PlusCircle },
-    { name: 'Existing Girvi', path: '/girvi/existing', icon: FolderOpen },
     { name: 'Girvi Ledger', path: '/ledger', icon: BookOpen },
     { name: 'Re-Pledge Girvi', path: '/re-pledge', icon: Repeat },
     { name: 'System Logs', path: '/logs', icon: ScrollText },

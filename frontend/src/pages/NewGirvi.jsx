@@ -117,7 +117,7 @@ export default function NewGirvi() {
       }
 
       await api.createGirvi(payload);
-      navigate('/girvi/existing');
+      navigate('/ledger');
     } catch (err) {
       setError(err.message || 'Failed to create Girvi');
     } finally {
@@ -128,7 +128,7 @@ export default function NewGirvi() {
   return (
     <div className="animate-fade-in" style={{ paddingBottom: '2rem' }}>
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1.5rem', gap: '1rem' }}>
-        <button className="btn btn-secondary" onClick={() => navigate('/girvi/existing')} style={{ padding: '0.5rem' }}>
+        <button className="btn btn-secondary" onClick={() => navigate('/ledger')} style={{ padding: '0.5rem' }}>
           <ArrowLeft size={20} />
         </button>
         <h2 style={{ fontSize: '1.5rem', fontWeight: '700', margin: 0 }}>Create New Girvi</h2>
@@ -240,7 +240,7 @@ export default function NewGirvi() {
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
-          <button type="button" className="btn btn-secondary" onClick={() => navigate('/girvi/existing')}>Cancel</button>
+          <button type="button" className="btn btn-secondary" onClick={() => navigate('/ledger')}>Cancel</button>
           <button type="submit" className="btn btn-primary" disabled={loading} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Save size={20} /> {loading ? 'Saving...' : 'Save Girvi'}
           </button>
