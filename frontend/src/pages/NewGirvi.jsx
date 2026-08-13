@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../api/client';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Trash2, Save, ArrowLeft, Camera } from 'lucide-react';
+import { Plus, Trash2, Save, ArrowLeft, Camera, Image as ImageIcon } from 'lucide-react';
+import CameraCapture from '../components/CameraCapture';
 
 export default function NewGirvi() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [activeCamera, setActiveCamera] = useState(null); // { type: 'customer' } or { type: 'article', index: 0 }
 
   const [girviData, setGirviData] = useState({
     pledge_no: '',
@@ -146,6 +148,17 @@ export default function NewGirvi() {
     reader.readAsDataURL(file);
   };
 
+  const handleCameraCapture = (dataUrl) => {
+    if (activeCamera?.type === 'customer') {
+      setGirviData(prev => ({ ...prev, photo_path: dataUrl }));
+    } else if (activeCamera?.type === 'article') {
+      const newArticles = [...articles];
+      newArticles[activeCamera.index].photo_path = dataUrl;
+      setArticles(newArticles);
+    }
+    setActiveCamera(null);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -191,6 +204,12 @@ export default function NewGirvi() {
 
   return (
     <div className="animate-fade-in" style={{ paddingBottom: '2rem' }}>
+      {activeCamera && (
+        <CameraCapture 
+          onCapture={handleCameraCapture} 
+          onClose={() => setActiveCamera(null)} 
+        />
+      )}
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1.5rem', gap: '1rem' }}>
         <button className="btn btn-secondary" onClick={() => navigate('/ledger')} style={{ padding: '0.5rem' }}>
           <ArrowLeft size={20} />
@@ -254,16 +273,18 @@ export default function NewGirvi() {
               <label className="input-label">Customer Photo</label>
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                 <label className="btn btn-secondary" style={{ cursor: 'pointer' }}>
-                  <Camera size={18} />
-                  {girviData.photo_path ? 'Change Photo' : 'Upload Photo'}
+                  <ImageIcon size={18} />
+                  {girviData.photo_path ? 'Change File' : 'Upload File'}
                   <input 
                     type="file" 
                     accept="image/*" 
-                    capture="environment"
                     style={{ display: 'none' }} 
                     onChange={(e) => handleImageUpload(e.target.files[0], (data) => setGirviData(prev => ({ ...prev, photo_path: data })))} 
                   />
                 </label>
+                <button type="button" className="btn btn-secondary" onClick={() => setActiveCamera({ type: 'customer' })}>
+                  <Camera size={18} /> Take Photo
+                </button>
                 {girviData.photo_path && (
                   <img src={girviData.photo_path} alt="Customer" style={{ height: '50px', width: '50px', objectFit: 'cover', borderRadius: '4px', border: '1px solid var(--border)' }} />
                 )}
@@ -325,12 +346,11 @@ export default function NewGirvi() {
                   <label className="input-label">Item Photo</label>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                     <label className="btn btn-secondary" style={{ cursor: 'pointer' }}>
-                      <Camera size={18} />
-                      {article.photo_path ? 'Change Item Photo' : 'Upload Item Photo'}
+                      <ImageIcon size={18} />
+                      {article.photo_path ? 'Change File' : 'Upload File'}
                       <input 
                         type="file" 
                         accept="image/*" 
-                        capture="environment"
                         style={{ display: 'none' }} 
                         onChange={(e) => handleImageUpload(e.target.files[0], (data) => {
                           const newArticles = [...articles];
@@ -339,6 +359,9 @@ export default function NewGirvi() {
                         })} 
                       />
                     </label>
+                    <button type="button" className="btn btn-secondary" onClick={() => setActiveCamera({ type: 'article', index })}>
+                      <Camera size={18} /> Take Photo
+                    </button>
                     {article.photo_path && (
                       <img src={article.photo_path} alt="Item" style={{ height: '50px', width: '50px', objectFit: 'cover', borderRadius: '4px', border: '1px solid var(--border)' }} />
                     )}
