@@ -220,15 +220,15 @@ export default function PrintBill() {
       </div>
 
       {/* Signatures */}
-      <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
-        <div style={{ flex: 1, border: '1px solid #000', borderRadius: '8px', padding: '6px', display: 'flex', flexDirection: 'column', minHeight: '50px' }}>
+      <div style={{ display: 'flex', gap: '8px', marginTop: '6px', flex: 1 }}>
+        <div style={{ flex: 1, border: '1px solid #000', borderRadius: '8px', padding: '6px', display: 'flex', flexDirection: 'column' }}>
           <div style={{ fontWeight: 'bold', fontSize: '10px' }}>For {company ? company.name.toUpperCase() : "POOJA BANKERS & JEWELLERS"}</div>
           <div style={{ flex: 1 }} />
           <div style={{ borderTop: '1px solid #000', paddingTop: '4px', textAlign: 'center', fontSize: '9px', fontWeight: 'bold' }}>
             SIGNATURE OF P.B. OR HIS AGENT
           </div>
         </div>
-        <div style={{ flex: 1, border: '1px solid #000', borderRadius: '8px', padding: '6px', display: 'flex', flexDirection: 'column', minHeight: '50px' }}>
+        <div style={{ flex: 1, border: '1px solid #000', borderRadius: '8px', padding: '6px', display: 'flex', flexDirection: 'column' }}>
           <div style={{ fontSize: '9px', fontWeight: 'bold', lineHeight: '1.4' }}>
             I declare that the above articles are my own property. The above statement is true to the best of my knowledge and belief.
           </div>
