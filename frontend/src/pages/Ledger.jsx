@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../api/client';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Eye, Loader2, Calendar } from 'lucide-react';
+import { Plus, Eye, Loader2, Calendar, Trash2, Edit, Unlock, IndianRupee, X } from 'lucide-react';
 
 export default function Ledger() {
   const [girvis, setGirvis] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showPartPaymentModal, setShowPartPaymentModal] = useState(false);
+  const [activeGirviId, setActiveGirviId] = useState(null);
+  const [partPaymentAmount, setPartPaymentAmount] = useState('');
+  const [actionLoading, setActionLoading] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -22,6 +26,51 @@ export default function Ledger() {
       setError(err.message || 'Failed to fetch Girvis');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to permanently delete this Girvi?')) return;
+    try {
+      setActionLoading(true);
+      await api.deleteGirvi(id);
+      fetchGirvis();
+    } catch (err) {
+      setError(err.message || 'Failed to delete Girvi');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleRelease = async (id) => {
+    if (!window.confirm('Are you sure you want to mark this Girvi as Released?')) return;
+    try {
+      setActionLoading(true);
+      await api.releaseGirvi(id);
+      fetchGirvis();
+    } catch (err) {
+      setError(err.message || 'Failed to release Girvi');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handlePartPaymentSubmit = async () => {
+    if (!partPaymentAmount || isNaN(partPaymentAmount) || Number(partPaymentAmount) <= 0) {
+      alert("Please enter a valid amount");
+      return;
+    }
+    try {
+      setActionLoading(true);
+      await api.partPaymentGirvi(activeGirviId, Number(partPaymentAmount));
+      setShowPartPaymentModal(false);
+      setPartPaymentAmount('');
+      setActiveGirviId(null);
+      fetchGirvis();
+    } catch (err) {
+      setError(err.message || 'Failed to record part payment');
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -108,9 +157,57 @@ export default function Ledger() {
                       </span>
                     </td>
                     <td style={{ padding: '1rem', textAlign: 'center' }}>
-                      <button className="btn btn-secondary" style={{ padding: '0.5rem' }} title="View Details">
-                        <Eye size={18} />
-                      </button>
+                      <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
+                        <button 
+                          className="btn btn-secondary" 
+                          style={{ padding: '0.5rem', color: 'var(--primary-color)' }} 
+                          title="Print/View"
+                          onClick={() => navigate(`/girvi/${girvi.id}/print`)}
+                          disabled={actionLoading}
+                        >
+                          <Eye size={18} />
+                        </button>
+                        <button 
+                          className="btn btn-secondary" 
+                          style={{ padding: '0.5rem', color: '#f59e0b' }} 
+                          title="Edit"
+                          onClick={() => navigate(`/girvi/edit/${girvi.id}`)}
+                          disabled={actionLoading}
+                        >
+                          <Edit size={18} />
+                        </button>
+                        {girvi.status === 'Active' && (
+                          <>
+                            <button 
+                              className="btn btn-secondary" 
+                              style={{ padding: '0.5rem', color: '#10b981' }} 
+                              title="Part Payment"
+                              onClick={() => { setActiveGirviId(girvi.id); setShowPartPaymentModal(true); }}
+                              disabled={actionLoading}
+                            >
+                              <IndianRupee size={18} />
+                            </button>
+                            <button 
+                              className="btn btn-secondary" 
+                              style={{ padding: '0.5rem', color: '#8b5cf6' }} 
+                              title="Release"
+                              onClick={() => handleRelease(girvi.id)}
+                              disabled={actionLoading}
+                            >
+                              <Unlock size={18} />
+                            </button>
+                          </>
+                        )}
+                        <button 
+                          className="btn btn-secondary" 
+                          style={{ padding: '0.5rem', color: '#ef4444' }} 
+                          title="Delete"
+                          onClick={() => handleDelete(girvi.id)}
+                          disabled={actionLoading}
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -119,6 +216,37 @@ export default function Ledger() {
           </table>
         </div>
       </div>
+
+      {/* Part Payment Modal */}
+      {showPartPaymentModal && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
+          <div className="card" style={{ width: '90%', maxWidth: '400px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h3 style={{ margin: 0 }}>Record Part Payment</h3>
+              <button onClick={() => setShowPartPaymentModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+                <X size={20} />
+              </button>
+            </div>
+            <div className="input-group">
+              <label className="input-label">Amount Paid (₹)</label>
+              <input 
+                type="number" 
+                className="input-field" 
+                value={partPaymentAmount}
+                onChange={(e) => setPartPaymentAmount(e.target.value)}
+                placeholder="Enter amount"
+                autoFocus
+              />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '1.5rem' }}>
+              <button className="btn btn-secondary" onClick={() => setShowPartPaymentModal(false)}>Cancel</button>
+              <button className="btn btn-primary" onClick={handlePartPaymentSubmit} disabled={actionLoading}>
+                {actionLoading ? <Loader2 className="spin" size={16} /> : 'Save Payment'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

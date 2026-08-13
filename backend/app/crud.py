@@ -161,4 +161,67 @@ def get_girvi(db: Session, girvi_id: int) -> Optional[Girvi]:
 def list_girvis(db: Session, skip: int = 0, limit: int = 100):
     return db.query(Girvi).order_by(Girvi.id.desc()).offset(skip).limit(limit).all()
 
-# Additional helper for existing pledge CRUD can be retained elsewhere if needed.
+def delete_girvi(db: Session, girvi_id: int):
+    girvi = get_girvi(db, girvi_id)
+    if girvi:
+        db.delete(girvi)
+        db.commit()
+    return girvi
+
+def update_girvi_status(db: Session, girvi_id: int, status: str):
+    girvi = get_girvi(db, girvi_id)
+    if girvi:
+        girvi.status = status
+        db.commit()
+        db.refresh(girvi)
+    return girvi
+
+def part_payment_girvi(db: Session, girvi_id: int, amount: float):
+    girvi = get_girvi(db, girvi_id)
+    if girvi and girvi.loan_amount >= amount:
+        girvi.loan_amount -= amount
+        db.commit()
+        db.refresh(girvi)
+    return girvi
+
+def update_girvi(db: Session, girvi_id: int, girvi_data: schemas.GirviCreate):
+    girvi = get_girvi(db, girvi_id)
+    if not girvi:
+        return None
+    
+    # Update main fields
+    girvi.pledge_no = girvi_data.pledge_no
+    girvi.pledge_date = girvi_data.pledge_date
+    girvi.due_date = girvi_data.due_date
+    girvi.customer_name = girvi_data.customer_name
+    girvi.relation_type = girvi_data.relation_type
+    girvi.relation_name = girvi_data.relation_name
+    girvi.address = girvi_data.address
+    girvi.mobile_number = girvi_data.mobile_number
+    girvi.photo_path = girvi_data.photo_path
+    girvi.present_value = girvi_data.present_value
+    girvi.loan_amount = girvi_data.loan_amount
+    girvi.loan_amount_words = girvi_data.loan_amount_words
+    girvi.monthly_income = girvi_data.monthly_income
+    girvi.status = girvi_data.status
+
+    # Update articles (recreate them)
+    db.query(Article).filter(Article.girvi_id == girvi_id).delete()
+    for art in girvi_data.articles:
+        article = Article(
+            girvi_id=girvi.id,
+            name=art.name,
+            quantity=art.quantity,
+            gross_wt=art.gross_wt,
+            less_wt=art.less_wt,
+            net_wt=art.net_wt,
+            present_value=art.present_value,
+            loan_amount=art.loan_amount,
+            loan_amount_words=art.loan_amount_words,
+            photo_path=art.photo_path,
+        )
+        db.add(article)
+
+    db.commit()
+    db.refresh(girvi)
+    return girvi

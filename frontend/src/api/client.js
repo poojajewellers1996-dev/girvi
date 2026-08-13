@@ -83,6 +83,20 @@ export const api = {
     method: 'POST',
     body: JSON.stringify(data)
   }),
+  updateGirvi: (id, data) => request(`/girvi/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data)
+  }),
+  deleteGirvi: (id) => request(`/girvi/${id}`, {
+    method: 'DELETE'
+  }),
+  releaseGirvi: (id) => request(`/girvi/${id}/release`, {
+    method: 'PATCH'
+  }),
+  partPaymentGirvi: (id, amount) => request(`/girvi/${id}/part-payment`, {
+    method: 'PATCH',
+    body: JSON.stringify({ amount })
+  }),
   getCustomerByMobile: (mobile) => request(`/customer/${encodeURIComponent(mobile)}`),
   getGirviStats: () => request('/girvi/stats')
 };

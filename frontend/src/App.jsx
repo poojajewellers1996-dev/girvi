@@ -37,6 +37,7 @@ function App() {
           >
             <Route index element={<Dashboard />} />
             <Route path="girvi/new" element={<NewGirvi />} />
+            <Route path="girvi/edit/:id" element={<NewGirvi />} />
             <Route path="ledger" element={<Ledger />} />
             <Route path="re-pledge" element={<RePledge />} />
             <Route path="logs" element={<SystemLogs />} />

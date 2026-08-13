@@ -117,3 +117,6 @@ class GirviRead(BaseModel):
     articles: List[ArticleRead] = []
 
     model_config = {"from_attributes": True}
+
+class PartPaymentRequest(BaseModel):
+    amount: float = Field(..., gt=0)

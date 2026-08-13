@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../api/client';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Plus, Trash2, Save, ArrowLeft, Camera, Image as ImageIcon } from 'lucide-react';
 import CameraCapture from '../components/CameraCapture';
 
 export default function NewGirvi() {
+  const { id } = useParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -47,6 +48,36 @@ export default function NewGirvi() {
       [name]: name.includes('amount') || name.includes('value') || name === 'monthly_income' ? parseFloat(value) || 0 : value
     }));
   };
+
+  useEffect(() => {
+    if (id) {
+      setLoading(true);
+      api.getGirviById(id)
+        .then(data => {
+          setGirviData({
+            pledge_no: data.pledge_no,
+            pledge_date: data.pledge_date.split('T')[0],
+            due_date: data.due_date.split('T')[0],
+            customer_name: data.customer_name,
+            relation_type: data.relation_type || '',
+            relation_name: data.relation_name || '',
+            address: data.address || '',
+            mobile_number: data.mobile_number || '',
+            monthly_income: data.monthly_income || '',
+            present_value: data.present_value || 0,
+            loan_amount: data.loan_amount || 0,
+            loan_amount_words: data.loan_amount_words || '',
+            photo_path: data.photo_path || '',
+            status: data.status || 'Active'
+          });
+          if (data.articles && data.articles.length > 0) {
+            setArticles(data.articles);
+          }
+        })
+        .catch(err => setError(err.message || "Failed to load Girvi"))
+        .finally(() => setLoading(false));
+    }
+  }, [id]);
 
   useEffect(() => {
     const fetchCustomer = async () => {
@@ -193,8 +224,13 @@ export default function NewGirvi() {
          payload.loan_amount_words = 'Zero';
       }
 
-      const savedGirvi = await api.createGirvi(payload);
-      navigate(`/girvi/${savedGirvi.id}/print`);
+      if (id) {
+        const savedGirvi = await api.updateGirvi(id, payload);
+        navigate(`/girvi/${savedGirvi.id}/print`);
+      } else {
+        const savedGirvi = await api.createGirvi(payload);
+        navigate(`/girvi/${savedGirvi.id}/print`);
+      }
     } catch (err) {
       setError(err.message || 'Failed to create Girvi');
     } finally {

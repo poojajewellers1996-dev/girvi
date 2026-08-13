@@ -279,6 +279,56 @@ def get_girvi(
         raise HTTPException(status_code=404, detail="Girvi not found")
     return schemas.GirviRead.model_validate(g)
 
+@app.put("/girvi/{girvi_id}", response_model=schemas.GirviRead)
+def update_girvi(
+    girvi_id: int,
+    girvi_data: schemas.GirviCreate,
+    db: Session = Depends(get_db),
+    token: dict = Depends(get_current_user),
+):
+    updated = crud.update_girvi(db, girvi_id, girvi_data)
+    if not updated:
+        raise HTTPException(status_code=404, detail="Girvi not found")
+    log_system_action(db, "GIRVI_UPDATE", f"Updated Girvi #{updated.pledge_no}", module="GIRVI")
+    return schemas.GirviRead.model_validate(updated)
+
+@app.delete("/girvi/{girvi_id}")
+def delete_girvi(
+    girvi_id: int,
+    db: Session = Depends(get_db),
+    token: dict = Depends(get_current_user),
+):
+    deleted = crud.delete_girvi(db, girvi_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Girvi not found")
+    log_system_action(db, "GIRVI_DELETE", f"Deleted Girvi #{deleted.pledge_no}", module="GIRVI")
+    return {"status": "deleted"}
+
+@app.patch("/girvi/{girvi_id}/release", response_model=schemas.GirviRead)
+def release_girvi(
+    girvi_id: int,
+    db: Session = Depends(get_db),
+    token: dict = Depends(get_current_user),
+):
+    released = crud.update_girvi_status(db, girvi_id, "Released")
+    if not released:
+        raise HTTPException(status_code=404, detail="Girvi not found")
+    log_system_action(db, "GIRVI_RELEASE", f"Released Girvi #{released.pledge_no}", module="GIRVI")
+    return schemas.GirviRead.model_validate(released)
+
+@app.patch("/girvi/{girvi_id}/part-payment", response_model=schemas.GirviRead)
+def part_payment_girvi(
+    girvi_id: int,
+    payment: schemas.PartPaymentRequest,
+    db: Session = Depends(get_db),
+    token: dict = Depends(get_current_user),
+):
+    updated = crud.part_payment_girvi(db, girvi_id, payment.amount)
+    if not updated:
+        raise HTTPException(status_code=400, detail="Invalid Girvi or Amount exceeds loan")
+    log_system_action(db, "GIRVI_PART_PAYMENT", f"Part payment of ₹{payment.amount} on Girvi #{updated.pledge_no}", module="GIRVI")
+    return schemas.GirviRead.model_validate(updated)
+
 
 @app.get("/customer/{mobile_number}", response_model=schemas.GirviRead)
 def get_customer_by_mobile(
