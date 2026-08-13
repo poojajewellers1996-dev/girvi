@@ -78,6 +78,20 @@ class ArticleRead(BaseModel):
 
     model_config = {"from_attributes": True}
 
+# ─── Repledge ────────────────────────────────────────────────────────────────────
+
+class RepledgeCreate(BaseModel):
+    loan_number: str
+    repledger_name: str
+    bank_name: str
+    date_of_loan: datetime
+    amount: float
+
+class RepledgeRead(RepledgeCreate):
+    id: int
+    created_at: datetime
+    model_config = {"from_attributes": True}
+
 
 # ─── Girvi Entry ───────────────────────────────────────────────────────────────
 
@@ -97,6 +111,8 @@ class GirviCreate(BaseModel):
     monthly_income: Optional[float] = None
     status: Optional[str] = "Active"
     articles: List[ArticleCreate]
+    repledge_ids: Optional[List[int]] = []
+    new_repledges: Optional[List[RepledgeCreate]] = []
 
 class GirviRead(BaseModel):
     id: int
@@ -115,6 +131,7 @@ class GirviRead(BaseModel):
     monthly_income: Optional[float] = None
     status: Optional[str] = "Active"
     articles: List[ArticleRead] = []
+    repledges: List[RepledgeRead] = []
 
     model_config = {"from_attributes": True}
 

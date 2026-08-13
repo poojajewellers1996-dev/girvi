@@ -246,6 +246,12 @@ def list_girvis(
     token: dict = Depends(get_current_user),
 ):
     return [schemas.GirviRead.model_validate(g) for g in crud.list_girvis(db, skip, limit)]
+@app.get("/repledge", response_model=List[schemas.RepledgeRead])
+def list_repledges(
+    db: Session = Depends(get_db),
+    token: dict = Depends(get_current_user),
+):
+    return [schemas.RepledgeRead.model_validate(r) for r in crud.list_repledges(db)]
 
 @app.get("/girvi/stats")
 def get_girvi_stats(db: Session = Depends(get_db), token: dict = Depends(get_current_user)):

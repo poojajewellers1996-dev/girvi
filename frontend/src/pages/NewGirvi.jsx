@@ -41,6 +41,14 @@ export default function NewGirvi() {
     }
   ]);
 
+  const [isRepledged, setIsRepledged] = useState(false);
+  const [availableRepledges, setAvailableRepledges] = useState([]);
+  const [repledgeEntries, setRepledgeEntries] = useState([]);
+
+  useEffect(() => {
+    api.getRepledges().then(data => setAvailableRepledges(data)).catch(console.error);
+  }, []);
+
   const handleGirviChange = (e) => {
     const { name, value } = e.target;
     setGirviData((prev) => ({
@@ -72,6 +80,18 @@ export default function NewGirvi() {
           });
           if (data.articles && data.articles.length > 0) {
             setArticles(data.articles);
+          }
+          if (data.repledges && data.repledges.length > 0) {
+            setIsRepledged(true);
+            setRepledgeEntries(data.repledges.map(r => ({
+              type: 'link',
+              linked_id: r.id,
+              loan_number: r.loan_number,
+              repledger_name: r.repledger_name,
+              bank_name: r.bank_name,
+              date_of_loan: r.date_of_loan.split('T')[0],
+              amount: r.amount
+            })));
           }
         })
         .catch(err => setError(err.message || "Failed to load Girvi"))
@@ -190,6 +210,35 @@ export default function NewGirvi() {
     setActiveCamera(null);
   };
 
+  const addRepledge = () => {
+    setRepledgeEntries(prev => [...prev, {
+      type: 'new',
+      linked_id: '',
+      loan_number: '',
+      repledger_name: '',
+      bank_name: 'KS',
+      date_of_loan: new Date().toISOString().split('T')[0],
+      amount: ''
+    }]);
+  };
+
+  const removeRepledge = (index) => {
+    setRepledgeEntries(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const updateRepledge = (index, field, value) => {
+    const updated = [...repledgeEntries];
+    updated[index][field] = value;
+    setRepledgeEntries(updated);
+  };
+
+  const handleRepledgeToggle = (checked) => {
+    setIsRepledged(checked);
+    if (checked && repledgeEntries.length === 0) {
+      addRepledge();
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -222,6 +271,17 @@ export default function NewGirvi() {
 
       if (!payload.loan_amount_words) {
          payload.loan_amount_words = 'Zero';
+      }
+
+      if (isRepledged) {
+        payload.repledge_ids = repledgeEntries.filter(r => r.type === 'link' && r.linked_id).map(r => r.linked_id);
+        payload.new_repledges = repledgeEntries.filter(r => r.type === 'new').map(r => ({
+          loan_number: r.loan_number,
+          repledger_name: r.repledger_name,
+          bank_name: r.bank_name,
+          date_of_loan: new Date(r.date_of_loan || Date.now()).toISOString(),
+          amount: Number(r.amount) || 0
+        }));
       }
 
       if (id) {
@@ -407,6 +467,93 @@ export default function NewGirvi() {
             </div>
           ))}
         </div>
+
+        {/* Repledge Section */}
+        <div className="card" style={{ marginTop: '2rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
+            <input 
+              type="checkbox" 
+              id="repledge_toggle"
+              checked={isRepledged}
+              onChange={(e) => handleRepledgeToggle(e.target.checked)}
+              style={{ width: '1.2rem', height: '1.2rem', cursor: 'pointer' }}
+            />
+            <label htmlFor="repledge_toggle" style={{ fontWeight: '600', fontSize: '1.125rem', cursor: 'pointer', margin: 0 }}>
+              Is the item repledged?
+            </label>
+          </div>
+
+          {isRepledged && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              {repledgeEntries.map((entry, index) => (
+                <div key={index} style={{ padding: '1rem', border: '1px dashed var(--border-color)', borderRadius: '8px', position: 'relative' }}>
+                  {repledgeEntries.length > 1 && (
+                    <button type="button" onClick={() => removeRepledge(index)} style={{ position: 'absolute', top: '10px', right: '10px', background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}>
+                      <Trash2 size={18} />
+                    </button>
+                  )}
+                  
+                  <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                      <input type="radio" name={`repledge_type_${index}`} checked={entry.type === 'new'} onChange={() => updateRepledge(index, 'type', 'new')} /> Create New Repledge
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                      <input type="radio" name={`repledge_type_${index}`} checked={entry.type === 'link'} onChange={() => updateRepledge(index, 'type', 'link')} /> Link Existing Repledge
+                    </label>
+                  </div>
+
+                  {entry.type === 'link' ? (
+                    <div className="input-group">
+                      <label className="input-label">Select Existing Repledge *</label>
+                      <select className="input-field" value={entry.linked_id} onChange={(e) => updateRepledge(index, 'linked_id', Number(e.target.value))} required>
+                        <option value="">-- Select --</option>
+                        {availableRepledges.map(r => (
+                          <option key={r.id} value={r.id}>{r.loan_number} ({r.bank_name}) - ₹{r.amount}</option>
+                        ))}
+                      </select>
+                    </div>
+                  ) : (
+                    <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                      <div className="input-group">
+                        <label className="input-label">Name (whose name it is kept) *</label>
+                        <input type="text" className="input-field" value={entry.repledger_name} onChange={(e) => updateRepledge(index, 'repledger_name', e.target.value)} required />
+                      </div>
+                      <div className="input-group">
+                        <label className="input-label">Loan Number *</label>
+                        <input type="text" className="input-field" value={entry.loan_number} onChange={(e) => updateRepledge(index, 'loan_number', e.target.value)} required />
+                      </div>
+                      <div className="input-group">
+                        <label className="input-label">Bank *</label>
+                        <select className="input-field" value={entry.bank_name} onChange={(e) => updateRepledge(index, 'bank_name', e.target.value)} required>
+                          <option value="KS">KS</option>
+                          <option value="MM">MM</option>
+                          <option value="BOB">BOB</option>
+                          <option value="DH">DH</option>
+                          <option value="SBI">SBI</option>
+                        </select>
+                      </div>
+                      <div className="input-group">
+                        <label className="input-label">Date of Loan *</label>
+                        <input type="date" className="input-field" value={entry.date_of_loan} onChange={(e) => updateRepledge(index, 'date_of_loan', e.target.value)} required />
+                      </div>
+                      <div className="input-group">
+                        <label className="input-label">Amount (₹) *</label>
+                        <input type="number" className="input-field" value={entry.amount} onChange={(e) => updateRepledge(index, 'amount', e.target.value)} required />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+              
+              <div>
+                <button type="button" className="btn btn-secondary" onClick={addRepledge} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Plus size={16} /> Add Another Repledge Link
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
           <button type="button" className="btn btn-secondary" onClick={() => navigate('/ledger')}>Cancel</button>

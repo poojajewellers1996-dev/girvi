@@ -151,6 +151,26 @@ def create_girvi(db: Session, girvi_data: GirviCreate, owner_user_id: int):
             photo_path=art.photo_path,
         )
         db.add(article)
+
+    # Handle Repledges
+    if girvi_data.new_repledges:
+        for new_rep in girvi_data.new_repledges:
+            rep_obj = Repledge(
+                loan_number=new_rep.loan_number,
+                repledger_name=new_rep.repledger_name,
+                bank_name=new_rep.bank_name,
+                date_of_loan=new_rep.date_of_loan,
+                amount=new_rep.amount
+            )
+            db.add(rep_obj)
+            girvi.repledges.append(rep_obj)
+    
+    if girvi_data.repledge_ids:
+        for rid in girvi_data.repledge_ids:
+            existing_rep = db.query(Repledge).filter(Repledge.id == rid).first()
+            if existing_rep:
+                girvi.repledges.append(existing_rep)
+
     db.commit()
     db.refresh(girvi)
     return girvi
@@ -160,6 +180,9 @@ def get_girvi(db: Session, girvi_id: int) -> Optional[Girvi]:
 
 def list_girvis(db: Session, skip: int = 0, limit: int = 100):
     return db.query(Girvi).order_by(Girvi.id.desc()).offset(skip).limit(limit).all()
+
+def list_repledges(db: Session):
+    return db.query(Repledge).order_by(Repledge.id.desc()).all()
 
 def delete_girvi(db: Session, girvi_id: int):
     girvi = get_girvi(db, girvi_id)
@@ -221,6 +244,26 @@ def update_girvi(db: Session, girvi_id: int, girvi_data: schemas.GirviCreate):
             photo_path=art.photo_path,
         )
         db.add(article)
+
+    # Handle Repledges
+    girvi.repledges = [] # Clear existing associations
+    if girvi_data.new_repledges:
+        for new_rep in girvi_data.new_repledges:
+            rep_obj = Repledge(
+                loan_number=new_rep.loan_number,
+                repledger_name=new_rep.repledger_name,
+                bank_name=new_rep.bank_name,
+                date_of_loan=new_rep.date_of_loan,
+                amount=new_rep.amount
+            )
+            db.add(rep_obj)
+            girvi.repledges.append(rep_obj)
+    
+    if girvi_data.repledge_ids:
+        for rid in girvi_data.repledge_ids:
+            existing_rep = db.query(Repledge).filter(Repledge.id == rid).first()
+            if existing_rep:
+                girvi.repledges.append(existing_rep)
 
     db.commit()
     db.refresh(girvi)

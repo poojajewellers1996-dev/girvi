@@ -58,6 +58,25 @@ class Girvi(Base):
     monthly_income = Column(Float, nullable=True)
     status = Column(String, default="Active")
     articles = relationship("Article", back_populates="girvi", cascade="all, delete-orphan")
+    repledges = relationship("Repledge", secondary="girvi_repledges", back_populates="girvis")
+
+
+class Repledge(Base):
+    __tablename__ = "repledges"
+    id = Column(Integer, primary_key=True, index=True)
+    loan_number = Column(String, nullable=False, index=True)
+    repledger_name = Column(String, nullable=False)
+    bank_name = Column(String, nullable=False) # KS/MM/BOB/DH/SBI
+    date_of_loan = Column(DateTime, nullable=False)
+    amount = Column(Float, nullable=False)
+    created_at = Column(DateTime, server_default=func.now())
+    girvis = relationship("Girvi", secondary="girvi_repledges", back_populates="repledges")
+
+
+class GirviRepledge(Base):
+    __tablename__ = "girvi_repledges"
+    girvi_id = Column(Integer, ForeignKey("girvis.id", ondelete="CASCADE"), primary_key=True)
+    repledge_id = Column(Integer, ForeignKey("repledges.id", ondelete="CASCADE"), primary_key=True)
 
 
 class Article(Base):

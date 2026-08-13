@@ -97,6 +97,7 @@ export const api = {
     method: 'PATCH',
     body: JSON.stringify({ amount })
   }),
+  getRepledges: () => request('/repledge'),
   getCustomerByMobile: (mobile) => request(`/customer/${encodeURIComponent(mobile)}`),
   getGirviStats: () => request('/girvi/stats')
 };
