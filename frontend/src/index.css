@@ -453,7 +453,24 @@ input[type="number"] {
   }
 }
 
-/* Print Styles */
+/* Print container - side by side layout on SCREEN */
+.print-container {
+  display: flex;
+  flex-direction: row;
+  gap: 0;
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  align-items: flex-start;
+  font-family: 'Times New Roman', Times, serif;
+}
+
+.print-container > div:first-child,
+.print-container > div:last-child {
+  flex: 1;
+}
+
+
 @media print {
   /* Hide UI elements that shouldn't be printed */
   .sidebar, .topnav, .mobile-menu-btn, .sidebar-overlay, .btn, .hide-on-print {
