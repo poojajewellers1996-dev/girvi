@@ -7,20 +7,28 @@ export default function PrintBill() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [girvi, setGirvi] = useState(null);
+  const [company, setCompany] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchGirvi = async () => {
+    const fetchData = async () => {
       try {
-        const data = await api.getGirviById(id);
-        setGirvi(data);
+        const girviData = await api.getGirviById(id);
+        setGirvi(girviData);
+        
+        try {
+          const compData = await api.getCompany();
+          setCompany(compData);
+        } catch (e) {
+          console.warn("Could not load company details");
+        }
       } catch (err) {
         console.error("Failed to load girvi for printing", err);
       } finally {
         setLoading(false);
       }
     };
-    fetchGirvi();
+    fetchData();
   }, [id]);
 
   if (loading) return <div style={{ padding: '2rem' }}>Loading bill...</div>;
@@ -57,15 +65,15 @@ export default function PrintBill() {
           PJ
         </div>
         <div style={{ flex: 1, textAlign: 'center' }}>
-          <h1 style={{ margin: 0, fontSize: '20px', letterSpacing: '1px' }}>POOJA BANKERS & JEWELLERS</h1>
+          <h1 style={{ margin: 0, fontSize: '20px', letterSpacing: '1px' }}>{company ? company.name.toUpperCase() : "POOJA BANKERS & JEWELLERS"}</h1>
           <div style={{ fontWeight: 'bold', fontSize: '10px' }}>PAWN BROKERS</div>
-          <div style={{ fontSize: '10px' }}>Main Road, Budigere, Devanahalli Taluk, Bangalore Rural - 562129</div>
-          <div style={{ fontSize: '10px' }}>Mob - 9448969674</div>
+          <div style={{ fontSize: '10px' }}>{company ? company.address : "Main Road, Budigere, Devanahalli Taluk, Bangalore Rural - 562129"}</div>
+          <div style={{ fontSize: '10px' }}>Mob - {company ? company.mobile : "9448969674"}</div>
         </div>
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', marginBottom: '8px' }}>
-        <span>No. PJ-26-{String(girvi.id).padStart(4, '0')}</span>
+        <span>No. {girvi.pledge_no}</span>
         <span>Date : {new Date(girvi.pledge_date).toLocaleDateString('en-GB')}</span>
       </div>
 
@@ -129,7 +137,7 @@ export default function PrintBill() {
       </div>
 
       <div style={{ fontSize: '10px', fontWeight: 'bold', fontStyle: 'italic', marginBottom: '4px' }}>
-        Rate of interest Fourteen percent per annum &nbsp;&nbsp;&nbsp; Time of redemption 12 months
+        Rate of interest {girvi.loan_amount_words ? 'As agreed' : 'Fourteen percent per annum'} &nbsp;&nbsp;&nbsp; Time of redemption 12 months
       </div>
       <div style={{ fontSize: '10px', fontStyle: 'italic', marginBottom: '4px' }}>
         The following article / articles is / are pawned with me / us
@@ -197,7 +205,7 @@ export default function PrintBill() {
       {/* Signatures */}
       <div style={{ display: 'flex', gap: '8px', flex: 1 }}>
         <div style={{ flex: 1, border: '1px solid #000', borderRadius: '8px', padding: '6px', display: 'flex', flexDirection: 'column' }}>
-          <div style={{ fontWeight: 'bold', fontSize: '10px' }}>For POOJA BANKERS & JEWELLERS</div>
+          <div style={{ fontWeight: 'bold', fontSize: '10px' }}>For {company ? company.name.toUpperCase() : "POOJA BANKERS & JEWELLERS"}</div>
           <div style={{ marginTop: 'auto', borderTop: '1px solid #000', paddingTop: '4px', textAlign: 'center', fontSize: '9px', fontWeight: 'bold' }}>
             SIGNATURE OF P.B. OR HIS AGENT
           </div>
@@ -215,7 +223,7 @@ export default function PrintBill() {
   );
 
   return (
-    <div style={{ padding: '2rem', backgroundColor: 'var(--bg-secondary)', minHeight: '100vh' }}>
+    <div className="print-page-wrapper" style={{ padding: '2rem', backgroundColor: 'var(--bg-secondary)', minHeight: '100vh' }}>
       <div className="hide-on-print" style={{ marginBottom: '1.5rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
         <button className="btn btn-secondary" onClick={() => navigate('/ledger')}>
           <ArrowLeft size={16} /> Back to Ledger
