@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom';
-import { Diamond, LayoutDashboard, PlusCircle, FolderOpen, BookOpen, Repeat, ScrollText, Settings } from 'lucide-react';
+import { Diamond, LayoutDashboard, PlusCircle, FolderOpen, BookOpen, Repeat, ScrollText, Settings, X } from 'lucide-react';
 
-export default function Sidebar() {
+export default function Sidebar({ isOpen, setIsOpen }) {
   const navItems = [
     { name: 'Dashboard', path: '/', icon: LayoutDashboard },
     { name: 'New Girvi', path: '/girvi/new', icon: PlusCircle },
@@ -12,12 +12,18 @@ export default function Sidebar() {
   ];
 
   return (
-    <aside className="sidebar">
-      <div className="sidebar-header">
+    <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
+      <div className="sidebar-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div className="brand" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <Diamond color="var(--primary)" size={24} />
           GirviManager
         </div>
+        <button 
+          className="mobile-menu-btn" 
+          onClick={() => setIsOpen(false)}
+        >
+          <X size={24} />
+        </button>
       </div>
       
       <nav className="sidebar-nav">

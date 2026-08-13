@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, LogOut, UserCircle } from 'lucide-react';
+import { Search, LogOut, UserCircle, Menu } from 'lucide-react';
 
-export default function TopNav() {
+export default function TopNav({ toggleSidebar }) {
   const navigate = useNavigate();
   const [time, setTime] = useState(new Date());
 
@@ -18,17 +18,22 @@ export default function TopNav() {
 
   return (
     <header className="topnav">
-      <div className="search-container" style={{ display: 'flex', alignItems: 'center', backgroundColor: 'var(--background)', borderRadius: 'var(--radius-full)', padding: '0.5rem 1rem', width: '400px', border: '1px solid var(--border)' }}>
-        <Search size={18} color="var(--text-muted)" style={{ marginRight: '0.5rem' }} />
-        <input 
-          type="text" 
-          placeholder="Search by number, name or mobile..." 
-          style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: '0.875rem' }}
-        />
+      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', width: '100%', maxWidth: '500px' }}>
+        <button className="mobile-menu-btn" onClick={toggleSidebar}>
+          <Menu size={24} />
+        </button>
+        <div className="search-container" style={{ display: 'flex', alignItems: 'center', backgroundColor: 'var(--background)', borderRadius: 'var(--radius-full)', padding: '0.5rem 1rem', width: '100%', border: '1px solid var(--border)' }}>
+          <Search size={18} color="var(--text-muted)" style={{ marginRight: '0.5rem' }} />
+          <input 
+            type="text" 
+            placeholder="Search by number or name..." 
+            style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: '0.875rem' }}
+          />
+        </div>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+        <div className="hide-on-mobile" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
           <span style={{ fontWeight: '600', fontSize: '0.875rem', color: 'var(--text-main)' }}>
             {time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
           </span>
