@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../api/client';
-import { Loader2, ChevronDown, ChevronUp, ExternalLink, Calendar, Landmark } from 'lucide-react';
+import { Loader2, ChevronDown, ChevronUp, ExternalLink, Calendar, Landmark, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export default function RePledge() {
@@ -8,6 +8,7 @@ export default function RePledge() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [expandedRows, setExpandedRows] = useState(new Set());
+  const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -45,10 +46,21 @@ export default function RePledge() {
     });
   };
 
+  const filteredRepledges = repledges.filter(r => {
+    if (!searchTerm) return true;
+    const term = searchTerm.toLowerCase();
+    return (
+      (r.loan_number && r.loan_number.toLowerCase().includes(term)) ||
+      (r.bank_name && r.bank_name.toLowerCase().includes(term)) ||
+      (r.repledger_name && r.repledger_name.toLowerCase().includes(term)) ||
+      (r.date_of_loan && r.date_of_loan.includes(term))
+    );
+  });
+
   // Calculate totals
-  const totalBankLoans = repledges.length;
-  const totalRepledgedAmount = repledges.reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
-  const totalLinkedGirvis = repledges.reduce((sum, r) => sum + (r.girvis?.length || 0), 0);
+  const totalBankLoans = filteredRepledges.length;
+  const totalRepledgedAmount = filteredRepledges.reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
+  const totalLinkedGirvis = filteredRepledges.reduce((sum, r) => sum + (r.girvis?.length || 0), 0);
 
   if (loading) {
     return (
@@ -60,7 +72,22 @@ export default function RePledge() {
 
   return (
     <div className="animate-fade-in">
-      <h2 style={{ fontSize: '1.5rem', fontWeight: '700', marginBottom: '1.5rem' }}>Bank Re-Pledge Dashboard</h2>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+        <h2 style={{ fontSize: '1.5rem', fontWeight: '700', margin: 0 }}>Bank Re-Pledge Dashboard</h2>
+        <div style={{ position: 'relative', minWidth: '250px' }}>
+          <div style={{ position: 'absolute', top: '50%', left: '12px', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}>
+            <Search size={18} />
+          </div>
+          <input 
+            type="text" 
+            placeholder="Search by loan no, bank, name..." 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="input-field"
+            style={{ paddingLeft: '40px', margin: 0 }}
+          />
+        </div>
+      </div>
 
       <div className="grid" style={{ marginBottom: '2rem' }}>
         <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -97,14 +124,14 @@ export default function RePledge() {
               </tr>
             </thead>
             <tbody>
-              {repledges.length === 0 ? (
+              {filteredRepledges.length === 0 ? (
                 <tr>
                   <td colSpan="6" style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-                    No bank repledges found. Link girvis to bank loans when creating a new girvi.
+                    {searchTerm ? "No records match your search." : "No bank repledges found. Link girvis to bank loans when creating a new girvi."}
                   </td>
                 </tr>
               ) : (
-                repledges.map((repledge) => (
+                filteredRepledges.map((repledge) => (
                   <React.Fragment key={repledge.id}>
                     <tr 
                       style={{ borderBottom: '1px solid var(--border-color)', cursor: 'pointer', backgroundColor: expandedRows.has(repledge.id) ? 'var(--bg-secondary)' : 'transparent', transition: 'background-color 0.2s' }}

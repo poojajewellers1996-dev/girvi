@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../api/client';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Eye, Loader2, Calendar, Trash2, Edit, Unlock, IndianRupee, X } from 'lucide-react';
+import { Plus, Eye, Loader2, Calendar, Trash2, Edit, Unlock, IndianRupee, X, Search } from 'lucide-react';
 
 export default function Ledger() {
   const [girvis, setGirvis] = useState([]);
@@ -11,11 +11,31 @@ export default function Ledger() {
   const [activeGirviId, setActiveGirviId] = useState(null);
   const [partPaymentAmount, setPartPaymentAmount] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchGirvis();
   }, []);
+
+  const getStatusColor = (status) => {
+    switch(status) {
+      case 'Active': return '#10b981';
+      case 'Released': return '#8b5cf6';
+      default: return 'var(--text-muted)';
+    }
+  };
+
+  const filteredGirvis = girvis.filter(g => {
+    if (!searchTerm) return true;
+    const term = searchTerm.toLowerCase();
+    return (
+      (g.pledge_no && g.pledge_no.toLowerCase().includes(term)) ||
+      (g.customer_name && g.customer_name.toLowerCase().includes(term)) ||
+      (g.mobile_number && g.mobile_number.includes(term)) ||
+      (g.pledge_date && g.pledge_date.includes(term))
+    );
+  });
 
   const fetchGirvis = async () => {
     try {
@@ -93,15 +113,26 @@ export default function Ledger() {
 
   return (
     <div className="animate-fade-in">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
         <h2 style={{ fontSize: '1.5rem', fontWeight: '700', margin: 0 }}>Girvi Ledger</h2>
-        <button 
-          className="btn btn-primary" 
-          onClick={() => navigate('/girvi/new')}
-          style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-        >
-          <Plus size={18} /> New Girvi
-        </button>
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          <div style={{ position: 'relative', minWidth: '250px' }}>
+            <div style={{ position: 'absolute', top: '50%', left: '12px', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}>
+              <Search size={18} />
+            </div>
+            <input 
+              type="text" 
+              placeholder="Search by name, number, date..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="input-field"
+              style={{ paddingLeft: '40px', margin: 0 }}
+            />
+          </div>
+          <button className="btn btn-primary" onClick={() => navigate('/girvi/new')} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Plus size={20} /> New Girvi
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -125,14 +156,14 @@ export default function Ledger() {
               </tr>
             </thead>
             <tbody>
-              {girvis.length === 0 ? (
+              {filteredGirvis.length === 0 ? (
                 <tr>
                   <td colSpan="7" style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-                    No records found. Click "New Girvi" to create one.
+                    {searchTerm ? "No records match your search." : "No records found. Click \"New Girvi\" to create one."}
                   </td>
                 </tr>
               ) : (
-                girvis.map((girvi) => (
+                filteredGirvis.map((girvi) => (
                   <tr key={girvi.id} style={{ borderBottom: '1px solid var(--border-color)', transition: 'background-color 0.2s' }}>
                     <td style={{ padding: '1rem', fontWeight: '500' }}>{girvi.pledge_no}</td>
                     <td style={{ padding: '1rem' }}>
