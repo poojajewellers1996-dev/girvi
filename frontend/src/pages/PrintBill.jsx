@@ -57,12 +57,13 @@ export default function PrintBill() {
 
   const Copy = ({ type }) => (
     <div style={{
-      width: '48%',
+      flex: 1,
       display: 'flex',
       flexDirection: 'column',
       border: '1px solid #000',
       padding: '10px',
-      fontSize: '12px'
+      fontSize: '12px',
+      minHeight: '260mm',
     }}>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '2px solid #000', paddingBottom: '4px', marginBottom: '8px' }}>
@@ -192,9 +193,9 @@ export default function PrintBill() {
               </tr>
             );
           })}
-          {/* Fill empty rows to make it look like the receipt */}
-          {Array.from({ length: Math.max(0, 3 - girvi.articles.length) }).map((_, i) => (
-            <tr key={`empty-${i}`} style={{ borderBottom: '1px solid #000', height: '24px' }}>
+          {/* Fill empty rows to at least 6 total rows */}
+          {Array.from({ length: Math.max(0, 6 - girvi.articles.length) }).map((_, i) => (
+            <tr key={`empty-${i}`} style={{ borderBottom: '1px solid #000', height: '28px' }}>
               <td style={{ borderRight: '1px solid #000' }}>{girvi.articles.length + i + 1}</td>
               <td style={{ borderRight: '1px solid #000' }}></td>
               <td style={{ borderRight: '1px solid #000' }}></td>
@@ -220,10 +221,11 @@ export default function PrintBill() {
       </div>
 
       {/* Signatures */}
-      <div style={{ display: 'flex', gap: '8px', flex: 1 }}>
+      <div style={{ display: 'flex', gap: '8px', flex: 1, minHeight: '80px' }}>
         <div style={{ flex: 1, border: '1px solid #000', borderRadius: '8px', padding: '6px', display: 'flex', flexDirection: 'column' }}>
           <div style={{ fontWeight: 'bold', fontSize: '10px' }}>For {company ? company.name.toUpperCase() : "POOJA BANKERS & JEWELLERS"}</div>
-          <div style={{ marginTop: 'auto', borderTop: '1px solid #000', paddingTop: '4px', textAlign: 'center', fontSize: '9px', fontWeight: 'bold' }}>
+          <div style={{ flex: 1 }} />
+          <div style={{ borderTop: '1px solid #000', paddingTop: '4px', textAlign: 'center', fontSize: '9px', fontWeight: 'bold' }}>
             SIGNATURE OF P.B. OR HIS AGENT
           </div>
         </div>
@@ -231,7 +233,8 @@ export default function PrintBill() {
           <div style={{ fontSize: '9px', fontWeight: 'bold', lineHeight: '1.2' }}>
             I declare that the above articles are my own property. The above statement is true to the best of my knowledge and belief.
           </div>
-          <div style={{ marginTop: 'auto', borderTop: '1px solid #000', paddingTop: '4px', textAlign: 'right', fontSize: '9px', fontWeight: 'bold' }}>
+          <div style={{ flex: 1 }} />
+          <div style={{ borderTop: '1px solid #000', paddingTop: '4px', textAlign: 'right', fontSize: '9px', fontWeight: 'bold' }}>
             SIGNATURE / LTI OF PAWNER
           </div>
         </div>
