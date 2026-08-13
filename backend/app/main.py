@@ -90,7 +90,7 @@ def get_current_user(request: Request, db: Session = Depends(get_db)) -> dict:
         if user:
             if user.current_session_id != payload.get("sid"):
                 raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="SESSION_SUPERSEDED")
-            user.last_active_at = datetime.datetime.utcnow()
+            user.last_active_at = datetime.datetime.now(datetime.timezone.utc)
             db.commit()
     return payload
 
@@ -125,7 +125,7 @@ def login(data: schemas.LoginRequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     sid = str(uuid.uuid4())
     user.current_session_id = sid
-    user.last_active_at = datetime.datetime.utcnow()
+    user.last_active_at = datetime.datetime.now(datetime.timezone.utc)
     db.commit()
     token = create_access_token(user.username, session_id=sid)
     log_system_action(db, "USER_LOGIN", f"User {user.username} logged in", module="AUTH")
