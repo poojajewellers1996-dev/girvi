@@ -126,9 +126,9 @@ export default function LedgerModal({ girvi, onClose, onUpdate }) {
             <form onSubmit={handleSubmit} style={{ backgroundColor: 'var(--surface-hover)', padding: '1.25rem', borderRadius: '12px', marginBottom: '2rem', border: '1px solid var(--border)' }}>
               <h4 style={{ margin: '0 0 1rem 0', fontSize: '1rem', fontWeight: '600' }}>Record New Transaction</h4>
               
-              <div className="grid">
-                <div className="form-group">
-                  <label>Transaction Type</label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div className="input-group">
+                  <label className="input-label">Transaction Type</label>
                   <select 
                     value={txType} 
                     onChange={(e) => setTxType(e.target.value)} 
@@ -141,8 +141,8 @@ export default function LedgerModal({ girvi, onClose, onUpdate }) {
                   </select>
                 </div>
                 
-                <div className="form-group">
-                  <label>Amount (₹)</label>
+                <div className="input-group">
+                  <label className="input-label">Amount (₹)</label>
                   <input 
                     type="number" 
                     value={amount} 
@@ -154,8 +154,8 @@ export default function LedgerModal({ girvi, onClose, onUpdate }) {
                   />
                 </div>
 
-                <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                  <label>Remarks (Optional)</label>
+                <div className="input-group" style={{ gridColumn: '1 / -1' }}>
+                  <label className="input-label">Remarks (Optional)</label>
                   <input 
                     type="text" 
                     value={remarks} 
