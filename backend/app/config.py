@@ -13,7 +13,10 @@ class Settings(BaseSettings):
     CORS_ORIGINS: list = [
         "http://localhost:3000",
         "http://127.0.0.1:3000",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
         "https://day-book-five.vercel.app",
+        "https://poojagirvi.vercel.app",
     ]
     CORS_ORIGIN_REGEX: str = r"https://.*\.vercel\.app"
     LIVE_RATES_URL: str = "https://www.goodreturns.in/gold-rates/bangalore.html"
