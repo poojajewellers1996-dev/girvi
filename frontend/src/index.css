@@ -461,8 +461,9 @@ input[type="number"] {
   width: 100%;
   max-width: 1100px;
   margin: 0 auto;
-  align-items: flex-start;
+  align-items: stretch;
   font-family: 'Times New Roman', Times, serif;
+  min-height: 600px;
 }
 
 .print-container > div:first-child,
@@ -505,8 +506,7 @@ input[type="number"] {
 
   .print-container {
     width: 100%;
-    height: 100%;
-    max-height: 197mm; /* A4 landscape height minus margins */
+    height: 197mm;
     display: flex;
     justify-content: space-between;
     align-items: stretch;
@@ -517,8 +517,8 @@ input[type="number"] {
     page-break-inside: avoid;
   }
 
-  .print-container > * {
+  .print-container > div {
+    height: 100%;
     overflow: hidden;
-    page-break-inside: avoid;
   }
 }
