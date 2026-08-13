@@ -132,7 +132,6 @@ def create_girvi(db: Session, girvi_data: GirviCreate, owner_user_id: int):
         loan_amount_words=girvi_data.loan_amount_words,
         monthly_income=girvi_data.monthly_income,
         status=girvi_data.status,
-        photo_path=girvi_data.photo_path,
     )
     db.add(girvi)
     db.flush()  # obtain girvi.id before adding articles
