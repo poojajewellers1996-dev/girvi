@@ -68,10 +68,10 @@ def set_user_pin(db: Session, user: User, new_pin: str):
 
 # ==================== OTP CRUD ====================
 
-def create_otp(db: Session, user: User, code: str, expires_in: int = None):
+def create_otp(db: Session, user: User, code: str, expires_in: Optional[int] = None):
     if expires_in is None:
         expires_in = settings.OTP_EXPIRY_SECONDS
-    expires_at = datetime.datetime.utcnow() + datetime.timedelta(seconds=expires_in)
+    expires_at = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None) + datetime.timedelta(seconds=expires_in)
     otp = OTP(user_id=user.id, code=code, expires_at=expires_at, used=False)
     db.add(otp)
     db.commit()
@@ -79,7 +79,7 @@ def create_otp(db: Session, user: User, code: str, expires_in: int = None):
     return otp
 
 def get_valid_otp(db: Session, user: User, code: str) -> Optional[OTP]:
-    now = datetime.datetime.utcnow()
+    now = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
     otp = (
         db.query(OTP)
         .filter(
@@ -130,6 +130,7 @@ def create_girvi(db: Session, girvi_data: GirviCreate, owner_user_id: int):
         present_value=girvi_data.present_value,
         loan_amount=girvi_data.loan_amount,
         loan_amount_words=girvi_data.loan_amount_words,
+        monthly_income=girvi_data.monthly_income,
     )
     db.add(girvi)
     db.flush()  # obtain girvi.id before adding articles

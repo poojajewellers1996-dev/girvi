@@ -240,6 +240,18 @@ def get_girvi(
         raise HTTPException(status_code=404, detail="Girvi not found")
     return schemas.GirviRead.model_validate(g)
 
+
+@app.get("/customer/{mobile_number}", response_model=schemas.GirviRead)
+def get_customer_by_mobile(
+    mobile_number: str,
+    db: Session = Depends(get_db),
+    token: dict = Depends(get_current_user),
+):
+    g = db.query(models.Girvi).filter(models.Girvi.mobile_number == mobile_number).order_by(models.Girvi.id.desc()).first()
+    if not g:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    return schemas.GirviRead.model_validate(g)
+
 # ─────────────────────────────────────────────────────────────────────────────
 # WHATSAPP STUB
 # ─────────────────────────────────────────────────────────────────────────────

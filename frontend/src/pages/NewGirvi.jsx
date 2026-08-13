@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { api } from '../api/client';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Trash2, Save, ArrowLeft } from 'lucide-react';
@@ -17,6 +17,7 @@ export default function NewGirvi() {
     relation_name: '',
     address: '',
     mobile_number: '',
+    monthly_income: '',
     present_value: 0,
     loan_amount: 0,
     loan_amount_words: '',
@@ -39,9 +40,35 @@ export default function NewGirvi() {
     const { name, value } = e.target;
     setGirviData((prev) => ({
       ...prev,
-      [name]: name.includes('amount') || name.includes('value') ? parseFloat(value) || 0 : value
+      [name]: name.includes('amount') || name.includes('value') || name === 'monthly_income' ? parseFloat(value) || 0 : value
     }));
   };
+
+  useEffect(() => {
+    const fetchCustomer = async () => {
+      if (girviData.mobile_number && girviData.mobile_number.replace(/\D/g, '').length >= 10) {
+        try {
+          const formattedMobile = girviData.mobile_number.startsWith('+') ? girviData.mobile_number : `+91${girviData.mobile_number}`;
+          const customer = await api.getCustomerByMobile(formattedMobile);
+          if (customer) {
+            setGirviData(prev => ({
+              ...prev,
+              customer_name: customer.customer_name || prev.customer_name,
+              relation_type: customer.relation_type || prev.relation_type,
+              relation_name: customer.relation_name || prev.relation_name,
+              address: customer.address || prev.address,
+              monthly_income: customer.monthly_income || prev.monthly_income,
+            }));
+          }
+        } catch (err) {
+          // Ignore 404 or other errors for autofill
+        }
+      }
+    };
+    
+    const timeoutId = setTimeout(fetchCustomer, 600);
+    return () => clearTimeout(timeoutId);
+  }, [girviData.mobile_number]);
 
   const handleArticleChange = (index, e) => {
     const { name, value } = e.target;
@@ -177,6 +204,10 @@ export default function NewGirvi() {
             <div className="input-group">
               <label className="input-label">Mobile Number</label>
               <input type="text" name="mobile_number" className="input-field" placeholder="10-digit number" value={girviData.mobile_number} onChange={handleGirviChange} />
+            </div>
+            <div className="input-group">
+              <label className="input-label">Monthly Income (₹)</label>
+              <input type="number" step="0.01" name="monthly_income" className="input-field" value={girviData.monthly_income} onChange={handleGirviChange} />
             </div>
             <div className="input-group" style={{ gridColumn: '1 / -1' }}>
               <label className="input-label">Address</label>
