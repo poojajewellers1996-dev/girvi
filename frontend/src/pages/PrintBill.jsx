@@ -239,19 +239,47 @@ export default function PrintBill() {
 
         {/* Scissors / Cut Line */}
         <div style={{
-          width: '20px',
+          width: '30px',
+          flexShrink: 0,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          color: '#666',
-          borderLeft: '2px dashed #9ca3af',
-          position: 'relative'
+          justifyContent: 'center',
+          position: 'relative',
+          padding: '0 4px'
         }}>
-          <div style={{ position: 'absolute', top: '50%', transform: 'translate(-50%, -50%)', backgroundColor: 'white', padding: '10px 0' }}>
-            ✂
-          </div>
-          <div style={{ position: 'absolute', top: '50%', transform: 'translate(-50%, -50%) rotate(270deg)', fontSize: '10px', letterSpacing: '2px', whiteSpace: 'nowrap', marginTop: '40px', fontWeight: 'bold' }}>
-            TEAR / FOLD HERE
+          {/* Dashed vertical line */}
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            bottom: 0,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            borderLeft: '2px dashed #9ca3af',
+            zIndex: 0
+          }} />
+          {/* Scissors icon + text centered */}
+          <div style={{
+            position: 'relative',
+            zIndex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '6px',
+            backgroundColor: 'white',
+            padding: '8px 0'
+          }}>
+            <span style={{ fontSize: '18px', transform: 'rotate(90deg)', display: 'block' }}>✂</span>
+            <span style={{
+              fontSize: '8px',
+              fontWeight: 'bold',
+              letterSpacing: '1px',
+              color: '#6b7280',
+              writingMode: 'vertical-rl',
+              textOrientation: 'mixed',
+              transform: 'rotate(180deg)',
+              whiteSpace: 'nowrap'
+            }}>TEAR HERE</span>
           </div>
         </div>
 
