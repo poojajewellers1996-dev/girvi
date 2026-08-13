@@ -4,22 +4,6 @@ import { api } from '../api/client';
 import { ArrowLeft, Printer } from 'lucide-react';
 
 export default function PrintBill() {
-  const numberToWords = (num) => {
-    const a = ['', 'One ', 'Two ', 'Three ', 'Four ', 'Five ', 'Six ', 'Seven ', 'Eight ', 'Nine ', 'Ten ', 'Eleven ', 'Twelve ', 'Thirteen ', 'Fourteen ', 'Fifteen ', 'Sixteen ', 'Seventeen ', 'Eighteen ', 'Nineteen '];
-    const b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
-    
-    if ((num = num.toString()).length > 9) return 'overflow';
-    const n = ('000000000' + num).substr(-9).match(/^(\d{2})(\d{2})(\d{2})(\d{1})(\d{2})$/);
-    if (!n) return;
-    let str = '';
-    str += (n[1] != 0) ? (a[Number(n[1])] || b[n[1][0]] + ' ' + a[n[1][1]]) + 'Crore ' : '';
-    str += (n[2] != 0) ? (a[Number(n[2])] || b[n[2][0]] + ' ' + a[n[2][1]]) + 'Lakh ' : '';
-    str += (n[3] != 0) ? (a[Number(n[3])] || b[n[3][0]] + ' ' + a[n[3][1]]) + 'Thousand ' : '';
-    str += (n[4] != 0) ? (a[Number(n[4])] || b[n[4][0]] + ' ' + a[n[4][1]]) + 'Hundred ' : '';
-    str += (n[5] != 0) ? ((str != '') ? 'and ' : '') + (a[Number(n[5])] || b[n[5][0]] + ' ' + a[n[5][1]]) : '';
-    return str.trim() || 'Zero';
-  };
-
   const { id } = useParams();
   const navigate = useNavigate();
   const [girvi, setGirvi] = useState(null);
@@ -31,7 +15,7 @@ export default function PrintBill() {
       try {
         const girviData = await api.getGirviById(id);
         setGirvi(girviData);
-        
+
         try {
           const compData = await api.getCompany();
           setCompany(compData);
@@ -55,11 +39,11 @@ export default function PrintBill() {
   };
 
   const Copy = ({ type }) => (
-    <div style={{ 
-      width: '48%', 
-      display: 'flex', 
-      flexDirection: 'column', 
-      border: '1px solid #000', 
+    <div style={{
+      width: '48%',
+      display: 'flex',
+      flexDirection: 'column',
+      border: '1px solid #000',
       padding: '10px',
       fontSize: '12px'
     }}>
@@ -72,9 +56,9 @@ export default function PrintBill() {
 
       {/* Shop Title */}
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-        <div style={{ 
-          width: '50px', height: '50px', 
-          borderRadius: '50%', border: '2px solid #f59e0b', 
+        <div style={{
+          width: '50px', height: '50px',
+          borderRadius: '50%', border: '2px solid #f59e0b',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           color: '#f59e0b', fontWeight: 'bold', fontSize: '20px', marginRight: '10px'
         }}>
@@ -84,7 +68,7 @@ export default function PrintBill() {
           <h1 style={{ margin: 0, fontSize: '20px', letterSpacing: '1px' }}>{company ? company.name.toUpperCase() : "POOJA BANKERS & JEWELLERS"}</h1>
           <div style={{ fontWeight: 'bold', fontSize: '10px' }}>PAWN BROKERS</div>
           <div style={{ fontSize: '10px' }}>{company ? company.address : "Main Road, Budigere, Devanahalli Taluk, Bangalore Rural - 562129"}</div>
-          <div style={{ fontSize: '10px' }}>Mob - {company ? company.mobile : "9448969674"}</div>
+          <div style={{ fontSize: '10px' }}>Mob - {company ? company.mobile : "9448587754"}</div>
         </div>
       </div>
 
@@ -107,11 +91,11 @@ export default function PrintBill() {
                 <td style={{ padding: '4px', borderBottom: '1px solid #000', borderLeft: '1px solid #000', fontWeight: 'bold' }}>: {girvi.relation_type} {girvi.relation_name}</td>
               </tr>
               <tr>
-                <td style={{ padding: '4px', borderBottom: '1px solid #000', fontWeight: 'bold' }}>RESIDENCE<br/>(OWN/RENTAL)</td>
+                <td style={{ padding: '4px', borderBottom: '1px solid #000', fontWeight: 'bold' }}>RESIDENCE<br />(OWN/RENTAL)</td>
                 <td style={{ padding: '4px', borderBottom: '1px solid #000', borderLeft: '1px solid #000', fontWeight: 'bold' }}>: {girvi.address}</td>
               </tr>
               <tr>
-                <td style={{ padding: '4px', borderBottom: '1px solid #000', fontWeight: 'bold' }}>OCCUPATION<br/>ADDRESS</td>
+                <td style={{ padding: '4px', borderBottom: '1px solid #000', fontWeight: 'bold' }}>OCCUPATION<br />ADDRESS</td>
                 <td style={{ padding: '4px', borderBottom: '1px solid #000', borderLeft: '1px solid #000', fontWeight: 'bold' }}>: —</td>
               </tr>
               <tr>
@@ -148,12 +132,12 @@ export default function PrintBill() {
         </div>
         <div style={{ flex: 2, border: '1px solid #000', borderRadius: '8px', padding: '6px' }}>
           <div style={{ fontSize: '10px', fontWeight: 'bold', marginBottom: '4px' }}>RUPEES IN WORDS</div>
-          <div style={{ fontSize: '14px', fontWeight: 'bold', fontStyle: 'italic' }}>{numberToWords(girvi.loan_amount)} Only</div>
+          <div style={{ fontSize: '14px', fontWeight: 'bold', fontStyle: 'italic' }}>{girvi.loan_amount_words} Only</div>
         </div>
       </div>
 
       <div style={{ fontSize: '10px', fontWeight: 'bold', fontStyle: 'italic', marginBottom: '4px' }}>
-        Rate of interest Fourteen percent per annum &nbsp;&nbsp;&nbsp; Time of redemption 12 months
+        Rate of interest {girvi.loan_amount_words ? 'As agreed' : 'Fourteen percent per annum'} &nbsp;&nbsp;&nbsp; Time of redemption 12 months
       </div>
       <div style={{ fontSize: '10px', fontStyle: 'italic', marginBottom: '4px' }}>
         The following article / articles is / are pawned with me / us
@@ -252,13 +236,13 @@ export default function PrintBill() {
       {/* The Printable Container */}
       <div className="print-container">
         <Copy type="BRANCH COPY" />
-        
+
         {/* Scissors / Cut Line */}
-        <div style={{ 
-          width: '20px', 
-          display: 'flex', 
-          flexDirection: 'column', 
-          alignItems: 'center', 
+        <div style={{
+          width: '20px',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
           color: '#666',
           borderLeft: '2px dashed #9ca3af',
           position: 'relative'

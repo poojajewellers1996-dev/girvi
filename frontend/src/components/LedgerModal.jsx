@@ -84,20 +84,20 @@ export default function LedgerModal({ girvi, onClose, onUpdate }) {
 
   return (
     <div style={{
-      position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 9999,
+      position: 'fixed', inset: 0, backgroundColor: 'rgba(15, 23, 42, 0.7)', zIndex: 9999,
       display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '1rem'
     }}>
       <div style={{
-        backgroundColor: 'var(--bg-primary)', borderRadius: '16px', width: '100%', maxWidth: '600px',
+        backgroundColor: 'var(--surface)', borderRadius: 'var(--radius-xl)', width: '100%', maxWidth: '600px',
         maxHeight: '90vh', display: 'flex', flexDirection: 'column',
-        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)'
+        boxShadow: 'var(--shadow-lg)'
       }}>
         
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.5rem', borderBottom: '1px solid var(--border-color)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.5rem', borderBottom: '1px solid var(--border)' }}>
           <div>
             <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <NotebookTabs size={24} color="var(--primary-color)" />
+              <NotebookTabs size={24} color="var(--primary)" />
               Ledger Book: {girvi.pledge_no}
             </h3>
             <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Customer: {girvi.customer_name}</p>
@@ -110,20 +110,20 @@ export default function LedgerModal({ girvi, onClose, onUpdate }) {
         <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', flex: 1 }}>
           
           {/* Balance Overview */}
-          <div style={{ padding: '1.5rem', backgroundColor: 'var(--bg-secondary)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ padding: '1.5rem', backgroundColor: 'var(--surface-hover)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)' }}>
             <div>
               <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', fontWeight: '500' }}>Original Loan Amount</div>
               <div style={{ fontSize: '1.125rem', fontWeight: '600' }}>₹{girvi.loan_amount.toLocaleString()}</div>
             </div>
             <div style={{ textAlign: 'right' }}>
               <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', fontWeight: '500' }}>Current Balance</div>
-              <div style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--primary-color)' }}>₹{currentBalance.toLocaleString()}</div>
+              <div style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--primary)' }}>₹{currentBalance.toLocaleString()}</div>
             </div>
           </div>
 
           <div style={{ padding: '1.5rem', overflowY: 'auto' }}>
             {/* Add Transaction Form */}
-            <form onSubmit={handleSubmit} style={{ backgroundColor: 'var(--bg-secondary)', padding: '1.25rem', borderRadius: '12px', marginBottom: '2rem' }}>
+            <form onSubmit={handleSubmit} style={{ backgroundColor: 'var(--surface-hover)', padding: '1.25rem', borderRadius: '12px', marginBottom: '2rem', border: '1px solid var(--border)' }}>
               <h4 style={{ margin: '0 0 1rem 0', fontSize: '1rem', fontWeight: '600' }}>Record New Transaction</h4>
               
               <div className="grid">
@@ -182,13 +182,13 @@ export default function LedgerModal({ girvi, onClose, onUpdate }) {
               ) : error ? (
                 <div style={{ color: 'red' }}>{error}</div>
               ) : transactions.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '2rem', backgroundColor: 'var(--bg-secondary)', borderRadius: '8px', color: 'var(--text-muted)' }}>
+                <div style={{ textAlign: 'center', padding: '2rem', backgroundColor: 'var(--surface-hover)', borderRadius: '8px', color: 'var(--text-muted)', border: '1px solid var(--border)' }}>
                   No transactions recorded yet.
                 </div>
               ) : (
-                <div style={{ border: '1px solid var(--border-color)', borderRadius: '8px', overflow: 'hidden' }}>
+                <div style={{ border: '1px solid var(--border)', borderRadius: '8px', overflow: 'hidden' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>
-                    <thead style={{ backgroundColor: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-color)' }}>
+                    <thead style={{ backgroundColor: 'var(--surface-hover)', borderBottom: '1px solid var(--border)' }}>
                       <tr>
                         <th style={{ padding: '0.75rem 1rem', fontWeight: '600' }}>Date</th>
                         <th style={{ padding: '0.75rem 1rem', fontWeight: '600' }}>Type</th>
@@ -198,7 +198,7 @@ export default function LedgerModal({ girvi, onClose, onUpdate }) {
                     </thead>
                     <tbody>
                       {transactions.map((t) => (
-                        <tr key={t.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                        <tr key={t.id} style={{ borderBottom: '1px solid var(--border)' }}>
                           <td style={{ padding: '0.75rem 1rem', whiteSpace: 'nowrap', color: 'var(--text-muted)' }}>
                             {new Date(t.transaction_date).toLocaleDateString('en-GB')}
                           </td>
