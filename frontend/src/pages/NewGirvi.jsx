@@ -21,8 +21,8 @@ export default function NewGirvi() {
     address: '',
     mobile_number: '',
     monthly_income: '',
-    present_value: 0,
-    loan_amount: 0,
+    present_value: '',
+    loan_amount: '',
     loan_amount_words: '',
     photo_path: '',
   });
@@ -31,11 +31,11 @@ export default function NewGirvi() {
     {
       name: '',
       quantity: 1,
-      gross_wt: 0,
-      less_wt: 0,
-      net_wt: 0,
-      present_value: 0,
-      loan_amount: 0,
+      gross_wt: '',
+      less_wt: '',
+      net_wt: '',
+      present_value: '',
+      loan_amount: '',
       loan_amount_words: '',
       photo_path: '',
     }
@@ -49,12 +49,38 @@ export default function NewGirvi() {
     api.getRepledges().then(data => setAvailableRepledges(data)).catch(console.error);
   }, []);
 
+  const numberToWords = (num) => {
+    if (!num || isNaN(num) || num === 0) return 'Zero';
+    num = Math.floor(num);
+    const a = ['','One ','Two ','Three ','Four ', 'Five ','Six ','Seven ','Eight ','Nine ','Ten ','Eleven ','Twelve ','Thirteen ','Fourteen ','Fifteen ','Sixteen ','Seventeen ','Eighteen ','Nineteen '];
+    const b = ['', '', 'Twenty','Thirty','Forty','Fifty', 'Sixty','Seventy','Eighty','Ninety'];
+
+    if ((num = num.toString()).length > 9) return 'overflow';
+    let n = ('000000000' + num).substr(-9).match(/^(\d{2})(\d{2})(\d{2})(\d{1})(\d{2})$/);
+    if (!n) return '';
+    let str = '';
+    str += (n[1] != 0) ? (a[Number(n[1])] || b[n[1][0]] + ' ' + a[n[1][1]]) + 'Crore ' : '';
+    str += (n[2] != 0) ? (a[Number(n[2])] || b[n[2][0]] + ' ' + a[n[2][1]]) + 'Lakh ' : '';
+    str += (n[3] != 0) ? (a[Number(n[3])] || b[n[3][0]] + ' ' + a[n[3][1]]) + 'Thousand ' : '';
+    str += (n[4] != 0) ? (a[Number(n[4])] || b[n[4][0]] + ' ' + a[n[4][1]]) + 'Hundred ' : '';
+    str += (n[5] != 0) ? ((str != '') ? 'and ' : '') + (a[Number(n[5])] || b[n[5][0]] + ' ' + a[n[5][1]]) : '';
+    return str.trim() + ' Rupees Only';
+  };
+
   const handleGirviChange = (e) => {
     const { name, value } = e.target;
-    setGirviData((prev) => ({
-      ...prev,
-      [name]: name.includes('amount') || name.includes('value') || name === 'monthly_income' ? parseFloat(value) || 0 : value
-    }));
+    let val = value;
+    if (name.includes('amount') || name.includes('value') || name === 'monthly_income') {
+      val = value === '' ? '' : (parseFloat(value) || '');
+    }
+    
+    setGirviData((prev) => {
+      const updated = { ...prev, [name]: val };
+      if (name === 'loan_amount') {
+        updated.loan_amount_words = numberToWords(val);
+      }
+      return updated;
+    });
   };
 
   useEffect(() => {
@@ -130,17 +156,22 @@ export default function NewGirvi() {
     setArticles((prev) => {
       const newArticles = [...prev];
       let val = value;
-      if (['quantity'].includes(name)) val = parseInt(value) || 0;
-      if (['gross_wt', 'less_wt', 'net_wt', 'present_value', 'loan_amount'].includes(name)) val = parseFloat(value) || 0;
+      if (['quantity'].includes(name)) val = value === '' ? '' : (parseInt(value) || '');
+      if (['gross_wt', 'less_wt', 'net_wt', 'present_value', 'loan_amount'].includes(name)) val = value === '' ? '' : (parseFloat(value) || '');
       
       newArticles[index] = { ...newArticles[index], [name]: val };
       
       // Auto calculate net_wt
       if (name === 'gross_wt' || name === 'less_wt') {
-        const gross = newArticles[index].gross_wt || 0;
-        const less = newArticles[index].less_wt || 0;
-        newArticles[index].net_wt = Number((gross - less).toFixed(3));
+        const gross = Number(newArticles[index].gross_wt) || 0;
+        const less = Number(newArticles[index].less_wt) || 0;
+        newArticles[index].net_wt = Math.max(0, gross - less) || '';
       }
+
+      if (name === 'loan_amount') {
+        newArticles[index].loan_amount_words = numberToWords(val);
+      }
+
       return newArticles;
     });
   };
@@ -319,7 +350,7 @@ export default function NewGirvi() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} onWheel={(e) => { if (e.target.type === 'number') e.target.blur(); }}>
         <div className="card" style={{ marginBottom: '1.5rem' }}>
           <h3 style={{ marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>Customer Details</h3>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1rem' }}>
