@@ -1,0 +1,254 @@
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { api } from '../api/client';
+import { ArrowLeft, Printer } from 'lucide-react';
+
+export default function PrintBill() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [girvi, setGirvi] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchGirvi = async () => {
+      try {
+        const data = await api.getGirviById(id);
+        setGirvi(data);
+      } catch (err) {
+        console.error("Failed to load girvi for printing", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchGirvi();
+  }, [id]);
+
+  if (loading) return <div style={{ padding: '2rem' }}>Loading bill...</div>;
+  if (!girvi) return <div style={{ padding: '2rem' }}>Bill not found!</div>;
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const Copy = ({ type }) => (
+    <div style={{ 
+      width: '48%', 
+      display: 'flex', 
+      flexDirection: 'column', 
+      border: '1px solid #000', 
+      padding: '10px',
+      fontSize: '12px'
+    }}>
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '2px solid #000', paddingBottom: '4px', marginBottom: '8px' }}>
+        <span style={{ fontWeight: 'bold' }}>FORM 'F' (SEE RULE 12) PAWN TICKET</span>
+        <span>PBL NO. DRB/R/PB/2026-27</span>
+        <span style={{ backgroundColor: '#e5e7eb', padding: '2px 8px', borderRadius: '4px', fontWeight: 'bold', fontSize: '10px' }}>{type}</span>
+      </div>
+
+      {/* Shop Title */}
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+        <div style={{ 
+          width: '50px', height: '50px', 
+          borderRadius: '50%', border: '2px solid #f59e0b', 
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          color: '#f59e0b', fontWeight: 'bold', fontSize: '20px', marginRight: '10px'
+        }}>
+          PJ
+        </div>
+        <div style={{ flex: 1, textAlign: 'center' }}>
+          <h1 style={{ margin: 0, fontSize: '20px', letterSpacing: '1px' }}>POOJA BANKERS & JEWELLERS</h1>
+          <div style={{ fontWeight: 'bold', fontSize: '10px' }}>PAWN BROKERS</div>
+          <div style={{ fontSize: '10px' }}>Main Road, Budigere, Devanahalli Taluk, Bangalore Rural - 562129</div>
+          <div style={{ fontSize: '10px' }}>Mob - 9448969674</div>
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', marginBottom: '8px' }}>
+        <span>No. PJ-26-{String(girvi.id).padStart(4, '0')}</span>
+        <span>Date : {new Date(girvi.pledge_date).toLocaleDateString('en-GB')}</span>
+      </div>
+
+      {/* Customer Info Box */}
+      <div style={{ border: '2px solid #000', borderRadius: '8px', display: 'flex', marginBottom: '8px' }}>
+        <div style={{ flex: 1 }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
+            <tbody>
+              <tr>
+                <td style={{ padding: '4px', borderBottom: '1px solid #000', fontWeight: 'bold', width: '35%' }}>NAME OF PAWNER</td>
+                <td style={{ padding: '4px', borderBottom: '1px solid #000', borderLeft: '1px solid #000', fontWeight: 'bold' }}>: {girvi.customer_name}</td>
+              </tr>
+              <tr>
+                <td style={{ padding: '4px', borderBottom: '1px solid #000', fontWeight: 'bold' }}>S/O W/O D/O</td>
+                <td style={{ padding: '4px', borderBottom: '1px solid #000', borderLeft: '1px solid #000', fontWeight: 'bold' }}>: {girvi.relation_type} {girvi.relation_name}</td>
+              </tr>
+              <tr>
+                <td style={{ padding: '4px', borderBottom: '1px solid #000', fontWeight: 'bold' }}>RESIDENCE<br/>(OWN/RENTAL)</td>
+                <td style={{ padding: '4px', borderBottom: '1px solid #000', borderLeft: '1px solid #000', fontWeight: 'bold' }}>: {girvi.address}</td>
+              </tr>
+              <tr>
+                <td style={{ padding: '4px', borderBottom: '1px solid #000', fontWeight: 'bold' }}>OCCUPATION<br/>ADDRESS</td>
+                <td style={{ padding: '4px', borderBottom: '1px solid #000', borderLeft: '1px solid #000', fontWeight: 'bold' }}>: —</td>
+              </tr>
+              <tr>
+                <td colSpan="2" style={{ padding: '0' }}>
+                  <div style={{ display: 'flex' }}>
+                    <div style={{ flex: 1, padding: '4px', fontWeight: 'bold' }}>MOB : {girvi.mobile_number?.replace('+91', '')}</div>
+                    <div style={{ flex: 1, padding: '4px', fontWeight: 'bold', borderLeft: '1px solid #000' }}>INC : {girvi.monthly_income}</div>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        {/* Photos */}
+        <div style={{ width: '120px', borderLeft: '2px solid #000', display: 'flex', padding: '4px', gap: '4px' }}>
+          <div style={{ flex: 1, border: '1px solid #ccc', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f3f4f6' }}>
+            {girvi.photo_path ? (
+              <img src={girvi.photo_path} alt="Customer" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : <span style={{ fontSize: '10px' }}>Customer Photo</span>}
+          </div>
+          <div style={{ flex: 1, border: '1px solid #ccc', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#3b82f6' }}>
+            {girvi.articles && girvi.articles[0]?.photo_path ? (
+              <img src={girvi.articles[0].photo_path} alt="Item" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : <span style={{ fontSize: '10px', color: 'white' }}>Item Photo</span>}
+          </div>
+        </div>
+      </div>
+
+      {/* Loan Boxes */}
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+        <div style={{ flex: 1, border: '1px solid #000', borderRadius: '8px', padding: '6px' }}>
+          <div style={{ fontSize: '10px', fontWeight: 'bold', marginBottom: '4px' }}>PRINCIPAL LOAN AMOUNT</div>
+          <div style={{ fontSize: '16px', fontWeight: 'bold' }}>₹{girvi.loan_amount}</div>
+        </div>
+        <div style={{ flex: 2, border: '1px solid #000', borderRadius: '8px', padding: '6px' }}>
+          <div style={{ fontSize: '10px', fontWeight: 'bold', marginBottom: '4px' }}>RUPEES IN WORDS</div>
+          <div style={{ fontSize: '14px', fontWeight: 'bold', fontStyle: 'italic' }}>{girvi.loan_amount_words} Only</div>
+        </div>
+      </div>
+
+      <div style={{ fontSize: '10px', fontWeight: 'bold', fontStyle: 'italic', marginBottom: '4px' }}>
+        Rate of interest Fourteen percent per annum &nbsp;&nbsp;&nbsp; Time of redemption 12 months
+      </div>
+      <div style={{ fontSize: '10px', fontStyle: 'italic', marginBottom: '4px' }}>
+        The following article / articles is / are pawned with me / us
+      </div>
+
+      {/* Articles Table */}
+      <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #000', fontSize: '11px', textAlign: 'center', marginBottom: '4px' }}>
+        <thead>
+          <tr style={{ borderBottom: '1px solid #000' }}>
+            <th rowSpan="2" style={{ borderRight: '1px solid #000', padding: '2px', width: '5%' }}>SL NO</th>
+            <th rowSpan="2" style={{ borderRight: '1px solid #000', padding: '2px', width: '40%' }}>DESCRIPTION OF ARTICLES PLEDGED</th>
+            <th colSpan="2" style={{ borderRight: '1px solid #000', padding: '2px', borderBottom: '1px solid #000' }}>GROSS WT</th>
+            <th rowSpan="2" style={{ borderRight: '1px solid #000', padding: '2px' }}>LESS WT</th>
+            <th rowSpan="2" style={{ borderRight: '1px solid #000', padding: '2px' }}>NET WT</th>
+            <th rowSpan="2" style={{ padding: '2px' }}>PRESENT VALUE</th>
+          </tr>
+          <tr style={{ borderBottom: '1px solid #000' }}>
+            <th style={{ borderRight: '1px solid #000', padding: '2px', fontSize: '9px' }}>GMS.</th>
+            <th style={{ borderRight: '1px solid #000', padding: '2px', fontSize: '9px' }}>MGS.</th>
+          </tr>
+        </thead>
+        <tbody>
+          {girvi.articles.map((art, index) => {
+            const grams = Math.floor(art.gross_wt);
+            const mgs = Math.round((art.gross_wt - grams) * 1000);
+            return (
+              <tr key={index} style={{ borderBottom: '1px solid #000' }}>
+                <td style={{ borderRight: '1px solid #000', padding: '4px', fontWeight: 'bold' }}>{index + 1}</td>
+                <td style={{ borderRight: '1px solid #000', padding: '4px', fontWeight: 'bold', textAlign: 'left' }}>{art.name}</td>
+                <td style={{ borderRight: '1px solid #000', padding: '4px', fontWeight: 'bold' }}>{grams}</td>
+                <td style={{ borderRight: '1px solid #000', padding: '4px', fontWeight: 'bold' }}>{mgs > 0 ? mgs : ''}</td>
+                <td style={{ borderRight: '1px solid #000', padding: '4px', fontWeight: 'bold' }}>{art.less_wt > 0 ? art.less_wt : ''}</td>
+                <td style={{ borderRight: '1px solid #000', padding: '4px', fontWeight: 'bold' }}>{art.net_wt}</td>
+                <td style={{ padding: '4px', fontWeight: 'bold' }}>{art.present_value}</td>
+              </tr>
+            );
+          })}
+          {/* Fill empty rows to make it look like the receipt */}
+          {Array.from({ length: Math.max(0, 3 - girvi.articles.length) }).map((_, i) => (
+            <tr key={`empty-${i}`} style={{ borderBottom: '1px solid #000', height: '24px' }}>
+              <td style={{ borderRight: '1px solid #000' }}>{girvi.articles.length + i + 1}</td>
+              <td style={{ borderRight: '1px solid #000' }}></td>
+              <td style={{ borderRight: '1px solid #000' }}></td>
+              <td style={{ borderRight: '1px solid #000' }}></td>
+              <td style={{ borderRight: '1px solid #000' }}></td>
+              <td style={{ borderRight: '1px solid #000' }}></td>
+              <td></td>
+            </tr>
+          ))}
+          <tr>
+            <td colSpan="7" style={{ padding: '4px', fontWeight: 'bold', fontSize: '12px' }}>
+              (ಪ್ರತಿ ಮೂರು ತಿಂಗಳಿಗೊಮ್ಮೆ ಬಡ್ಡಿ ಹಣ ಕಟ್ಟಬೇಕು)
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      {/* Footer Info Box */}
+      <div style={{ display: 'flex', border: '1px solid #000', borderRadius: '8px', marginBottom: '8px' }}>
+        <div style={{ flex: 1, borderRight: '1px solid #000', padding: '4px', textAlign: 'center', fontWeight: 'bold' }}>Rs. {girvi.loan_amount.toFixed(2)}</div>
+        <div style={{ flex: 1, borderRight: '1px solid #000', padding: '4px', textAlign: 'center', fontWeight: 'bold' }}>Date: {new Date(girvi.pledge_date).toLocaleDateString('en-GB')}</div>
+        <div style={{ flex: 1, padding: '4px', textAlign: 'center', fontWeight: 'bold' }}>No. of PIECES: {girvi.articles.reduce((sum, art) => sum + art.quantity, 0)}</div>
+      </div>
+
+      {/* Signatures */}
+      <div style={{ display: 'flex', gap: '8px', flex: 1 }}>
+        <div style={{ flex: 1, border: '1px solid #000', borderRadius: '8px', padding: '6px', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ fontWeight: 'bold', fontSize: '10px' }}>For POOJA BANKERS & JEWELLERS</div>
+          <div style={{ marginTop: 'auto', borderTop: '1px solid #000', paddingTop: '4px', textAlign: 'center', fontSize: '9px', fontWeight: 'bold' }}>
+            SIGNATURE OF P.B. OR HIS AGENT
+          </div>
+        </div>
+        <div style={{ flex: 1, border: '1px solid #000', borderRadius: '8px', padding: '6px', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ fontSize: '9px', fontWeight: 'bold', lineHeight: '1.2' }}>
+            I declare that the above articles are my own property. The above statement is true to the best of my knowledge and belief.
+          </div>
+          <div style={{ marginTop: 'auto', borderTop: '1px solid #000', paddingTop: '4px', textAlign: 'right', fontSize: '9px', fontWeight: 'bold' }}>
+            SIGNATURE / LTI OF PAWNER
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{ padding: '2rem', backgroundColor: 'var(--bg-secondary)', minHeight: '100vh' }}>
+      <div className="hide-on-print" style={{ marginBottom: '1.5rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
+        <button className="btn btn-secondary" onClick={() => navigate('/ledger')}>
+          <ArrowLeft size={16} /> Back to Ledger
+        </button>
+        <button className="btn btn-primary" onClick={handlePrint}>
+          <Printer size={16} /> Print Bill
+        </button>
+      </div>
+
+      {/* The Printable Container */}
+      <div className="print-container">
+        <Copy type="BRANCH COPY" />
+        
+        {/* Scissors / Cut Line */}
+        <div style={{ 
+          width: '20px', 
+          display: 'flex', 
+          flexDirection: 'column', 
+          alignItems: 'center', 
+          color: '#666',
+          borderLeft: '2px dashed #9ca3af',
+          position: 'relative'
+        }}>
+          <div style={{ position: 'absolute', top: '50%', transform: 'translate(-50%, -50%)', backgroundColor: 'white', padding: '10px 0' }}>
+            ✂
+          </div>
+          <div style={{ position: 'absolute', top: '50%', transform: 'translate(-50%, -50%) rotate(270deg)', fontSize: '10px', letterSpacing: '2px', whiteSpace: 'nowrap', marginTop: '40px', fontWeight: 'bold' }}>
+            TEAR / FOLD HERE
+          </div>
+        </div>
+
+        <Copy type="CUSTOMER COPY" />
+      </div>
+    </div>
+  );
+}

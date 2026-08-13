@@ -452,3 +452,43 @@ input[type="number"] {
     padding: 1rem;
   }
 }
+
+/* Print Styles */
+@media print {
+  /* Hide UI elements that shouldn't be printed */
+  .sidebar, .topnav, .mobile-menu-btn, .sidebar-overlay, .btn, .hide-on-print {
+    display: none !important;
+  }
+  
+  .layout-wrapper, .main-content, .content-area {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    background-color: white !important;
+    box-shadow: none !important;
+    border: none !important;
+    height: auto !important;
+    min-height: auto !important;
+    overflow: visible !important;
+  }
+
+  body {
+    background-color: white !important;
+    color: black !important;
+    overflow: visible !important;
+  }
+
+  @page {
+    size: A4 landscape;
+    margin: 5mm;
+  }
+
+  .print-container {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    font-family: 'Times New Roman', Times, serif;
+    background-color: white;
+  }
+}

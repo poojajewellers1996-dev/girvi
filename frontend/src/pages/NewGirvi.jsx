@@ -193,8 +193,8 @@ export default function NewGirvi() {
          payload.loan_amount_words = 'Zero';
       }
 
-      await api.createGirvi(payload);
-      navigate('/ledger');
+      const savedGirvi = await api.createGirvi(payload);
+      navigate(`/girvi/${savedGirvi.id}/print`);
     } catch (err) {
       setError(err.message || 'Failed to create Girvi');
     } finally {

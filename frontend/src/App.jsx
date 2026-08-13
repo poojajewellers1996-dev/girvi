@@ -11,6 +11,7 @@ import Ledger from './pages/Ledger';
 import RePledge from './pages/RePledge';
 import SystemLogs from './pages/SystemLogs';
 import Settings from './pages/Settings';
+import PrintBill from './pages/PrintBill';
 
 const PrivateRoute = ({ children }) => {
   const token = getAuthToken();
@@ -40,6 +41,7 @@ function App() {
             <Route path="re-pledge" element={<RePledge />} />
             <Route path="logs" element={<SystemLogs />} />
             <Route path="settings" element={<Settings />} />
+            <Route path="girvi/:id/print" element={<PrintBill />} />
           </Route>
           {/* Catch all */}
           <Route path="*" element={<Navigate to="/" replace />} />
