@@ -18,6 +18,10 @@ class Settings(BaseSettings):
     CORS_ORIGIN_REGEX: str = r"https://.*\.vercel\.app"
     LIVE_RATES_URL: str = "https://www.goodreturns.in/gold-rates/bangalore.html"
     BACKUP_RETENTION_DAYS: int = 14
+    # Twilio Settings
+    TWILIO_ACCOUNT_SID: str = ""
+    TWILIO_AUTH_TOKEN: str = ""
+    TWILIO_VERIFY_SERVICE_SID: str = ""
 
     model_config = {"env_file": ".env", "case_sensitive": False}
 

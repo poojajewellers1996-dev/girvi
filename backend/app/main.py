@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 from .config import settings, get_db, engine, Base
 from . import models, schemas, crud
 from .whatsapp_service import WhatsAppClient
+from twilio.rest import Client
 
 # ─── Create all DB tables ─────────────────────────────────────────────────────
 Base.metadata.create_all(bind=engine)
@@ -168,6 +169,31 @@ def verify_otp_and_reset(body: schemas.OTPVerify, new_password: str, db: Session
 # ─────────────────────────────────────────────────────────────────────────────
 # COMPANY REGISTRATION
 # ─────────────────────────────────────────────────────────────────────────────
+
+@app.post("/auth/send-registration-otp")
+def send_registration_otp(body: schemas.OTPRequest):
+    try:
+        client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
+        phone_number = f"+91{body.phone}" if not body.phone.startswith("+") else body.phone
+        client.verify.v2.services(settings.TWILIO_VERIFY_SERVICE_SID).verifications.create(to=phone_number, channel="sms")
+        return {"status": "OTP sent"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/auth/verify-registration-otp")
+def verify_registration_otp(body: schemas.OTPVerify):
+    try:
+        client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
+        phone_number = f"+91{body.phone}" if not body.phone.startswith("+") else body.phone
+        verification_check = client.verify.v2.services(settings.TWILIO_VERIFY_SERVICE_SID).verification_checks.create(to=phone_number, code=body.code)
+        
+        if verification_check.status == "approved":
+            return {"status": "verified"}
+        else:
+            raise HTTPException(status_code=400, detail="Invalid OTP")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.post("/company/register")
 def register_company(data: schemas.CompanyRegister, db: Session = Depends(get_db)):

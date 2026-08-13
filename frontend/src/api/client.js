@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:8000'; // Default FastAPI port
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 export const setAuthToken = (token) => {
   if (token) {
@@ -53,6 +53,25 @@ export const api = {
   login: (credentials) => request('/auth/login', {
     method: 'POST',
     body: JSON.stringify(credentials)
+  }),
+  resetPin: (username, new_pin, password) => request(`/auth/reset-pin?username=${encodeURIComponent(username)}&new_pin=${encodeURIComponent(new_pin)}&password=${encodeURIComponent(password)}`, {
+    method: 'POST'
+  }),
+  requestPasswordReset: (data) => request('/auth/request-password-reset', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  }),
+  verifyOtp: (data, new_password) => request(`/auth/verify-otp?new_password=${encodeURIComponent(new_password)}`, {
+    method: 'POST',
+    body: JSON.stringify(data)
+  }),
+  sendRegistrationOtp: (phone) => request('/auth/send-registration-otp', {
+    method: 'POST',
+    body: JSON.stringify({ phone })
+  }),
+  verifyRegistrationOtp: (phone, code) => request('/auth/verify-registration-otp', {
+    method: 'POST',
+    body: JSON.stringify({ phone, code })
   }),
   registerCompany: (data) => request('/company/register', {
     method: 'POST',
