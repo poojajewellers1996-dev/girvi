@@ -99,5 +99,13 @@ export const api = {
   }),
   getRepledges: () => request('/repledge'),
   getCustomerByMobile: (mobile) => request(`/customer/${encodeURIComponent(mobile)}`),
-  getGirviStats: () => request('/girvi/stats')
+  getGirviStats: () => request('/girvi/stats'),
+  
+  // Settings & Logs
+  getLogs: () => request('/logs'),
+  getCompany: () => request('/company'),
+  updateCompany: (data) => request('/company', {
+    method: 'PUT',
+    body: JSON.stringify(data)
+  })
 };

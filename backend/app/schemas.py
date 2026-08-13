@@ -40,8 +40,31 @@ class CompanyRegister(BaseModel):
     password: str = Field(..., min_length=6)
     pin: Annotated[str, StringConstraints(pattern=r"^\d{4}$")]
     shop_details: Optional[str] = None
+class CompanyRead(BaseModel):
+    id: int
+    name: str
+    address: str
+    pin_code: str
+    mobile: str
+    model_config = {"from_attributes": True}
 
+class CompanyUpdate(BaseModel):
+    name: Optional[str] = None
+    address: Optional[str] = None
+    pin_code: Optional[str] = None
+    mobile: Optional[str] = Field(None, pattern=r"^\+?\d{10,15}$")
+    password: Optional[str] = Field(None, min_length=6)
 
+# ─── System Logs ──────────────────────────────────────────────────────────────
+
+class SystemLogRead(BaseModel):
+    id: int
+    timestamp: str
+    action: str
+    details: str
+    module: str
+    user_name: str
+    model_config = {"from_attributes": True}
 # ─── Girvi Articles ────────────────────────────────────────────────────────────
 
 class ArticleCreate(BaseModel):

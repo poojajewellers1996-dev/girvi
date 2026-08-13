@@ -270,3 +270,35 @@ def update_girvi(db: Session, girvi_id: int, girvi_data: schemas.GirviCreate):
     db.commit()
     db.refresh(girvi)
     return girvi
+
+# ==================== Settings & Logs ====================
+
+def list_logs(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(SystemLog).order_by(SystemLog.id.desc()).offset(skip).limit(limit).all()
+
+def get_company(db: Session, company_id: int):
+    return db.query(Company).filter(Company.id == company_id).first()
+
+def update_company(db: Session, company_id: int, company_data: schemas.CompanyUpdate):
+    company = get_company(db, company_id)
+    if not company:
+        return None
+    
+    if company_data.name is not None:
+        company.name = company_data.name
+    if company_data.address is not None:
+        company.address = company_data.address
+    if company_data.pin_code is not None:
+        company.pin_code = company_data.pin_code
+    if company_data.mobile is not None:
+        company.mobile = company_data.mobile
+        
+    if company_data.password is not None:
+        # Assuming admin_user password update
+        admin = db.query(User).filter(User.id == company.admin_user_id).first()
+        if admin:
+            admin.password_hash = hash_password(company_data.password)
+            
+    db.commit()
+    db.refresh(company)
+    return company

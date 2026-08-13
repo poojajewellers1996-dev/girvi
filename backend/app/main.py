@@ -355,3 +355,40 @@ def get_customer_by_mobile(
 def send_whatsapp(to: str, message: str, token: dict = Depends(get_current_user)):
     _wa.send_message(to, message)
     return {"status": "sent"}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# SETTINGS & LOGS ROUTES
+# ─────────────────────────────────────────────────────────────────────────────
+
+@app.get("/logs", response_model=List[schemas.SystemLogRead])
+def get_system_logs(
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db),
+    token: dict = Depends(get_current_user)
+):
+    return [schemas.SystemLogRead.model_validate(log) for log in crud.list_logs(db, skip, limit)]
+
+@app.get("/company", response_model=schemas.CompanyRead)
+def get_company_details(
+    db: Session = Depends(get_db),
+    token: dict = Depends(get_current_user)
+):
+    # Fetch first company since it's a single tenant app
+    company = db.query(models.Company).first()
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+    return schemas.CompanyRead.model_validate(company)
+
+@app.put("/company", response_model=schemas.CompanyRead)
+def update_company_details(
+    company_data: schemas.CompanyUpdate,
+    db: Session = Depends(get_db),
+    token: dict = Depends(get_current_user)
+):
+    company = db.query(models.Company).first()
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+    updated = crud.update_company(db, company.id, company_data)
+    log_system_action(db, "SETTINGS_UPDATE", f"Updated company profile", module="SETUP")
+    return schemas.CompanyRead.model_validate(updated)
