@@ -4,6 +4,22 @@ import { api } from '../api/client';
 import { ArrowLeft, Printer } from 'lucide-react';
 
 export default function PrintBill() {
+  const numberToWords = (num) => {
+    const a = ['', 'One ', 'Two ', 'Three ', 'Four ', 'Five ', 'Six ', 'Seven ', 'Eight ', 'Nine ', 'Ten ', 'Eleven ', 'Twelve ', 'Thirteen ', 'Fourteen ', 'Fifteen ', 'Sixteen ', 'Seventeen ', 'Eighteen ', 'Nineteen '];
+    const b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+    
+    if ((num = num.toString()).length > 9) return 'overflow';
+    const n = ('000000000' + num).substr(-9).match(/^(\d{2})(\d{2})(\d{2})(\d{1})(\d{2})$/);
+    if (!n) return;
+    let str = '';
+    str += (n[1] != 0) ? (a[Number(n[1])] || b[n[1][0]] + ' ' + a[n[1][1]]) + 'Crore ' : '';
+    str += (n[2] != 0) ? (a[Number(n[2])] || b[n[2][0]] + ' ' + a[n[2][1]]) + 'Lakh ' : '';
+    str += (n[3] != 0) ? (a[Number(n[3])] || b[n[3][0]] + ' ' + a[n[3][1]]) + 'Thousand ' : '';
+    str += (n[4] != 0) ? (a[Number(n[4])] || b[n[4][0]] + ' ' + a[n[4][1]]) + 'Hundred ' : '';
+    str += (n[5] != 0) ? ((str != '') ? 'and ' : '') + (a[Number(n[5])] || b[n[5][0]] + ' ' + a[n[5][1]]) : '';
+    return str.trim() || 'Zero';
+  };
+
   const { id } = useParams();
   const navigate = useNavigate();
   const [girvi, setGirvi] = useState(null);
@@ -132,12 +148,12 @@ export default function PrintBill() {
         </div>
         <div style={{ flex: 2, border: '1px solid #000', borderRadius: '8px', padding: '6px' }}>
           <div style={{ fontSize: '10px', fontWeight: 'bold', marginBottom: '4px' }}>RUPEES IN WORDS</div>
-          <div style={{ fontSize: '14px', fontWeight: 'bold', fontStyle: 'italic' }}>{girvi.loan_amount_words} Only</div>
+          <div style={{ fontSize: '14px', fontWeight: 'bold', fontStyle: 'italic' }}>{numberToWords(girvi.loan_amount)} Only</div>
         </div>
       </div>
 
       <div style={{ fontSize: '10px', fontWeight: 'bold', fontStyle: 'italic', marginBottom: '4px' }}>
-        Rate of interest {girvi.loan_amount_words ? 'As agreed' : 'Fourteen percent per annum'} &nbsp;&nbsp;&nbsp; Time of redemption 12 months
+        Rate of interest Fourteen percent per annum &nbsp;&nbsp;&nbsp; Time of redemption 12 months
       </div>
       <div style={{ fontSize: '10px', fontStyle: 'italic', marginBottom: '4px' }}>
         The following article / articles is / are pawned with me / us
