@@ -379,6 +379,18 @@ def create_transaction(
     log_system_action(db, "LEDGER_TRANSACTION", f"Added {transaction.transaction_type} of ₹{transaction.amount} on Girvi #{girvi.pledge_no}", module="GIRVI")
     return schemas.TransactionRead.model_validate(new_t)
 
+@app.delete("/transactions/{transaction_id}")
+def delete_transaction(
+    transaction_id: int,
+    db: Session = Depends(get_db),
+    token: dict = Depends(get_current_user),
+):
+    deleted = crud.delete_transaction(db, transaction_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+    log_system_action(db, "LEDGER_TRANSACTION_DELETE", f"Deleted transaction #{transaction_id}", module="GIRVI")
+    return {"status": "deleted"}
+
 # ─────────────────────────────────────────────────────────────────────────────
 # WHATSAPP STUB
 # ─────────────────────────────────────────────────────────────────────────────

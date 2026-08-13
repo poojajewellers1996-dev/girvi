@@ -227,6 +227,13 @@ def create_transaction(db: Session, girvi_id: int, transaction_data: schemas.Tra
 def get_transactions(db: Session, girvi_id: int):
     return db.query(LedgerTransaction).filter(LedgerTransaction.girvi_id == girvi_id).order_by(LedgerTransaction.id.asc()).all()
 
+def delete_transaction(db: Session, transaction_id: int):
+    t = db.query(LedgerTransaction).filter(LedgerTransaction.id == transaction_id).first()
+    if t:
+        db.delete(t)
+        db.commit()
+    return t
+
 def update_girvi(db: Session, girvi_id: int, girvi_data: schemas.GirviCreate):
     girvi = get_girvi(db, girvi_id)
     if not girvi:

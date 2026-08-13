@@ -111,6 +111,9 @@ export const api = {
     method: 'POST',
     body: JSON.stringify(data)
   }),
+  deleteTransaction: (transactionId) => request(`/transactions/${transactionId}`, {
+    method: 'DELETE'
+  }),
   
   // Settings & Logs
   getLogs: () => request('/logs'),
