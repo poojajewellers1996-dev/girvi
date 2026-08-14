@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../api/client';
-import { Loader2, ChevronDown, ChevronUp, ExternalLink, Calendar, Landmark, Search, Plus, Trash2, IndianRupee } from 'lucide-react';
+import { Loader2, ChevronDown, ChevronUp, ExternalLink, Calendar, Landmark, Search, Plus, Trash2, IndianRupee, Unlock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export default function RePledge() {
@@ -114,6 +114,20 @@ export default function RePledge() {
     }
   };
 
+  const handleReleaseRepledge = async (e, id, loanNo) => {
+    e.stopPropagation();
+    if (!window.confirm(`Are you sure you want to release / close Bank Loan #${loanNo}?`)) return;
+    try {
+      setActionLoading(true);
+      await api.releaseRepledge(id);
+      await fetchRepledges();
+    } catch (err) {
+      alert(err.message || 'Failed to release Bank Loan');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const filteredRepledges = repledges.filter(r => {
     if (!searchTerm) return true;
     const term = searchTerm.toLowerCase();
@@ -208,7 +222,6 @@ export default function RePledge() {
         </div>
       </div>
 
-
       {error && (
         <div style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', color: 'rgb(239, 68, 68)', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem' }}>
           {error}
@@ -227,12 +240,14 @@ export default function RePledge() {
                 <th style={{ padding: '1rem', fontWeight: '600' }}>Date of Loan</th>
                 <th style={{ padding: '1rem', fontWeight: '600', textAlign: 'right' }}>Loan Amount</th>
                 <th style={{ padding: '1rem', fontWeight: '600', textAlign: 'right' }}>Total Interest Paid</th>
+                <th style={{ padding: '1rem', fontWeight: '600', textAlign: 'center' }}>Status</th>
+                <th style={{ padding: '1rem', fontWeight: '600', textAlign: 'center' }}>Action</th>
               </tr>
             </thead>
             <tbody>
               {filteredRepledges.length === 0 ? (
                 <tr>
-                  <td colSpan="7" style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                  <td colSpan="9" style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
                     {searchTerm ? "No records match your search." : "No bank repledges found. Link girvis to bank loans when creating a new girvi."}
                   </td>
                 </tr>
@@ -274,13 +289,40 @@ export default function RePledge() {
                         <td style={{ padding: '1rem', fontWeight: '700', textAlign: 'right', color: '#f59e0b' }}>
                           ₹{totalPaid.toLocaleString('en-IN')}
                         </td>
+                        <td style={{ padding: '1rem', textAlign: 'center' }}>
+                          <span style={{
+                            padding: '0.25rem 0.6rem',
+                            borderRadius: '99px',
+                            fontSize: '0.75rem',
+                            fontWeight: '700',
+                            backgroundColor: repledge.status === 'Released' ? 'rgba(139,92,246,0.15)' : 'rgba(16,185,129,0.15)',
+                            color: repledge.status === 'Released' ? '#8b5cf6' : '#10b981'
+                          }}>
+                            {repledge.status || 'Active'}
+                          </span>
+                        </td>
+                        <td style={{ padding: '1rem', textAlign: 'center' }}>
+                          {repledge.status !== 'Released' ? (
+                            <button 
+                              className="btn btn-secondary" 
+                              style={{ padding: '0.35rem 0.6rem', fontSize: '0.78rem', color: '#8b5cf6', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
+                              onClick={(e) => handleReleaseRepledge(e, repledge.id, repledge.loan_number)}
+                              disabled={actionLoading}
+                              title="Release / Close Bank Loan"
+                            >
+                              <Unlock size={14} /> Release
+                            </button>
+                          ) : (
+                            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Released</span>
+                          )}
+                        </td>
                       </tr>
                       
                       {/* Expanded Row Content */}
                       {expandedRows.has(repledge.id) && (
                         <tr style={{ backgroundColor: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-color)' }}>
                           <td></td>
-                          <td colSpan="6" style={{ padding: '0 1rem 1.5rem 1rem' }}>
+                          <td colSpan="8" style={{ padding: '0 1rem 1.5rem 1rem' }}>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                               
                               {/* 1. Mini Ledger: Interest Payments Log */}

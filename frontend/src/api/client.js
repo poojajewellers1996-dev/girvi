@@ -121,6 +121,10 @@ export const api = {
   deleteRepledgeTransaction: (transactionId) => request(`/repledge/transactions/${transactionId}`, {
     method: 'DELETE'
   }),
+  releaseRepledge: (id) => request(`/repledge/${id}/release`, {
+    method: 'PATCH'
+  }),
+
 
   
   // Settings & Logs

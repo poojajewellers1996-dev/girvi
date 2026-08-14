@@ -69,9 +69,11 @@ class Repledge(Base):
     bank_name = Column(String, nullable=False) # KS/MM/BOB/DH/SBI
     date_of_loan = Column(DateTime, nullable=False)
     amount = Column(Float, nullable=False)
+    status = Column(String, default="Active")
     created_at = Column(DateTime, server_default=func.now())
     girvis = relationship("Girvi", secondary="girvi_repledges", back_populates="repledges")
     transactions = relationship("RepledgeTransaction", back_populates="repledge", cascade="all, delete-orphan")
+
 
 
 class RepledgeTransaction(Base):

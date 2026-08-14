@@ -125,6 +125,8 @@ class RepledgeCreate(BaseModel):
     bank_name: str
     date_of_loan: datetime
     amount: float
+    status: Optional[str] = "Active"
+
 
 class RepledgeTransactionCreate(BaseModel):
     amount: float = Field(..., gt=0)

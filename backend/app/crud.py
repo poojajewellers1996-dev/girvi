@@ -210,6 +210,15 @@ def delete_repledge_transaction(db: Session, transaction_id: int):
         db.commit()
     return t
 
+def update_repledge_status(db: Session, repledge_id: int, status: str):
+    rep = db.query(Repledge).filter(Repledge.id == repledge_id).first()
+    if rep:
+        rep.status = status
+        db.commit()
+        db.refresh(rep)
+    return rep
+
+
 
 def delete_girvi(db: Session, girvi_id: int):
     girvi = get_girvi(db, girvi_id)

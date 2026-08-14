@@ -40,6 +40,13 @@ try:
 except Exception:
     pass
 
+try:
+    with engine.begin() as conn:
+        conn.execute(text("ALTER TABLE repledges ADD COLUMN status VARCHAR DEFAULT 'Active';"))
+except Exception:
+    pass
+
+
 # ─── JWT helpers ──────────────────────────────────────────────────────────────
 
 
@@ -290,6 +297,20 @@ def delete_repledge_transaction(
         raise HTTPException(status_code=404, detail="Transaction not found")
     log_system_action(db, "REPLEDGE_INTEREST_DELETE", f"Deleted bank interest payment #{transaction_id}", module="REPLEDGE")
     return {"status": "deleted"}
+
+@app.patch("/repledge/{repledge_id}/release", response_model=schemas.RepledgeRead)
+@app.patch("/repledge/{repledge_id}/release/", response_model=schemas.RepledgeRead)
+def release_repledge(
+    repledge_id: int,
+    db: Session = Depends(get_db),
+    token: dict = Depends(get_current_user),
+):
+    released = crud.update_repledge_status(db, repledge_id, "Released")
+    if not released:
+        raise HTTPException(status_code=404, detail="Bank repledge not found")
+    log_system_action(db, "REPLEDGE_RELEASE", f"Released bank loan #{released.loan_number}", module="REPLEDGE")
+    return schemas.RepledgeRead.model_validate(released)
+
 
 
 
