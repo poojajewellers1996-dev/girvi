@@ -59,17 +59,74 @@ function ReleaseModal({ girvi, onClose, onConfirm, loading }) {
 
   const months = calcMonthsCeiling(girvi.pledge_date);
   const principal = Number(girvi.loan_amount) || 0;
-  const rate = Number(ratePercent) || 0;
-  const interest = +(principal * (rate / 100) * months).toFixed(2);
-  const total = +(principal + interest).toFixed(2);
+
+  // Editable interest & total — seeded from auto-calculation
+  const calcInterest = (rate) => +(principal * (Number(rate) / 100) * months).toFixed(2);
+  const [interestVal, setInterestVal] = useState(() => calcInterest(defaultRate));
+  const [totalVal, setTotalVal] = useState(() => +(principal + calcInterest(defaultRate)).toFixed(2));
 
   const pledgeDateFmt = new Date(girvi.pledge_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
   const todayFmt = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 
+  // When rate changes → recalculate both
+  function handleRateChange(val) {
+    setRatePercent(val);
+    const newInt = calcInterest(val);
+    setInterestVal(newInt);
+    setTotalVal(+(principal + newInt).toFixed(2));
+  }
+
+  // When metal toggle changes → reset rate and recalculate
   function handleMetalChange(m) {
     setMetalType(m);
-    setRatePercent(m === 'silver' ? 10 : 3);
+    const newRate = m === 'silver' ? 10 : 3;
+    setRatePercent(newRate);
+    const newInt = calcInterest(newRate);
+    setInterestVal(newInt);
+    setTotalVal(+(principal + newInt).toFixed(2));
   }
+
+  // User edits INTEREST → sync total
+  function handleInterestChange(val) {
+    setInterestVal(val);
+    const i = Number(val) || 0;
+    setTotalVal(+(principal + i).toFixed(2));
+  }
+
+  // User edits TOTAL → sync interest
+  function handleTotalChange(val) {
+    setTotalVal(val);
+    const t = Number(val) || 0;
+    setInterestVal(+(t - principal).toFixed(2));
+  }
+
+  // Reset to auto-calculated values
+  function handleReset() {
+    const newInt = calcInterest(ratePercent);
+    setInterestVal(newInt);
+    setTotalVal(+(principal + newInt).toFixed(2));
+  }
+
+  const interest = Number(interestVal) || 0;
+  const total = Number(totalVal) || 0;
+  const isModified = Math.abs(interest - calcInterest(ratePercent)) > 0.01;
+
+  const inputRowStyle = {
+    display: 'flex', alignItems: 'center', gap: '0.5rem',
+    background: 'var(--bg-surface-2)', border: '1px solid var(--border)',
+    borderRadius: 'var(--radius-md)', padding: '0.1rem 0.75rem',
+  };
+  const inputStyle = {
+    flex: 1, background: 'transparent', border: 'none', outline: 'none',
+    color: 'var(--text-primary)', fontFamily: 'var(--font-sans)',
+    fontSize: '0.95rem', fontWeight: 600, padding: '0.55rem 0',
+  };
+  const labelStyle = {
+    fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-secondary)',
+    textTransform: 'uppercase', letterSpacing: '0.06em',
+    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+    marginBottom: '0.4rem',
+  };
 
   return (
     <div style={{
@@ -85,7 +142,7 @@ function ReleaseModal({ girvi, onClose, onConfirm, loading }) {
         border: '1px solid var(--border-strong)',
         borderRadius: 'var(--radius-xl)',
         width: '100%',
-        maxWidth: '440px',
+        maxWidth: '460px',
         boxShadow: '0 20px 60px rgba(0,0,0,0.6), 0 0 30px rgba(99,102,241,0.15)',
         overflow: 'hidden',
         animation: 'fadeInUp 0.25s cubic-bezier(0.16,1,0.3,1)',
@@ -115,84 +172,102 @@ function ReleaseModal({ girvi, onClose, onConfirm, loading }) {
             </div>
             <div style={{ textAlign: 'right', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
               <div>{pledgeDateFmt} → {todayFmt}</div>
-              <div style={{ color: 'var(--brand-gold)', fontWeight: 600, marginTop: '2px' }}>{months} month{months !== 1 ? 's' : ''} elapsed</div>
+              <div style={{ color: '#f59e0b', fontWeight: 600, marginTop: '2px' }}>{months} month{months !== 1 ? 's' : ''} elapsed</div>
             </div>
           </div>
 
-          {/* Metal Type Selector */}
-          <div>
-            <label style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '0.4rem' }}>
-              Metal Type
-            </label>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              {['gold', 'silver'].map(m => (
-                <button
-                  key={m}
-                  onClick={() => handleMetalChange(m)}
-                  style={{
-                    flex: 1, padding: '0.5rem 0', borderRadius: 'var(--radius-md)',
+          {/* Metal Type + Rate row */}
+          <div style={{ display: 'flex', gap: '0.75rem' }}>
+            {/* Metal selector */}
+            <div style={{ flex: 1 }}>
+              <label style={labelStyle}>Metal Type</label>
+              <div style={{ display: 'flex', gap: '0.4rem' }}>
+                {['gold', 'silver'].map(m => (
+                  <button key={m} onClick={() => handleMetalChange(m)} style={{
+                    flex: 1, padding: '0.45rem 0', borderRadius: 'var(--radius-md)',
                     border: `1.5px solid ${metalType === m ? (m === 'gold' ? '#f59e0b' : '#94a3b8') : 'var(--border)'}`,
-                    background: metalType === m
-                      ? (m === 'gold' ? 'rgba(245,158,11,0.12)' : 'rgba(148,163,184,0.12)')
-                      : 'var(--bg-surface-2)',
+                    background: metalType === m ? (m === 'gold' ? 'rgba(245,158,11,0.12)' : 'rgba(148,163,184,0.12)') : 'var(--bg-surface-2)',
                     color: metalType === m ? (m === 'gold' ? '#f59e0b' : '#94a3b8') : 'var(--text-secondary)',
-                    fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer',
-                    transition: 'all 0.15s',
-                    textTransform: 'capitalize',
-                  }}
-                >
-                  {m === 'gold' ? '🥇' : '🥈'} {m}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Interest Rate Input */}
-          <div>
-            <label style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '0.4rem' }}>
-              Interest Rate (% per month)
-            </label>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--bg-surface-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '0.1rem 0.75rem' }}>
-              <Percent size={14} color="var(--text-muted)" />
-              <input
-                type="number"
-                min="0"
-                step="0.1"
-                value={ratePercent}
-                onChange={e => setRatePercent(e.target.value)}
-                style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: 'var(--text-primary)', fontFamily: 'var(--font-sans)', fontSize: '0.95rem', fontWeight: 600, padding: '0.55rem 0' }}
-              />
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>per month</span>
-            </div>
-          </div>
-
-          {/* Breakdown */}
-          <div style={{ background: 'var(--bg-surface-2)', borderRadius: 'var(--radius-md)', overflow: 'hidden', border: '1px solid var(--border)' }}>
-            {[
-              { label: 'Principal (Loan)', value: `₹${principal.toLocaleString('en-IN')}`, color: 'var(--text-primary)', bold: false },
-              { label: `Interest (${rate}% × ${months} mo)`, value: `₹${interest.toLocaleString('en-IN')}`, color: '#f59e0b', bold: false },
-            ].map(({ label, value, color }, i) => (
-              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 1rem', borderBottom: '1px solid var(--border)' }}>
-                <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>{label}</span>
-                <span style={{ fontSize: '0.9rem', fontWeight: 600, color }}>{value}</span>
+                    fontWeight: 600, fontSize: '0.8rem', cursor: 'pointer', transition: 'all 0.15s', textTransform: 'capitalize',
+                  }}>
+                    {m === 'gold' ? '🥇' : '🥈'} {m}
+                  </button>
+                ))}
               </div>
-            ))}
-            {/* Total */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', background: 'linear-gradient(135deg, rgba(99,102,241,0.12), rgba(139,92,246,0.08))' }}>
-              <span style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <IndianRupee size={14} color="var(--brand-primary)" /> Total to Collect
-              </span>
-              <span style={{ fontSize: '1.2rem', fontWeight: 800, background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                ₹{total.toLocaleString('en-IN')}
-              </span>
+            </div>
+
+            {/* Rate % */}
+            <div style={{ flex: 1 }}>
+              <label style={labelStyle}>Rate % / month</label>
+              <div style={inputRowStyle}>
+                <Percent size={13} color="var(--text-muted)" />
+                <input type="number" min="0" step="0.1" value={ratePercent}
+                  onChange={e => handleRateChange(e.target.value)}
+                  style={inputStyle} />
+              </div>
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div style={{ borderTop: '1px solid var(--border)', margin: '0 -0.25rem' }} />
+
+          {/* Three fields */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+
+            {/* Loan Amount — locked */}
+            <div>
+              <label style={labelStyle}>
+                <span>Loan Amount (Principal)</span>
+                <span style={{ background: 'rgba(99,102,241,0.12)', color: '#6366f1', borderRadius: '4px', padding: '1px 6px', fontSize: '0.65rem', fontWeight: 700 }}>LOCKED</span>
+              </label>
+              <div style={{ ...inputRowStyle, opacity: 0.6, cursor: 'not-allowed' }}>
+                <IndianRupee size={13} color="var(--text-muted)" />
+                <input type="number" value={principal} readOnly
+                  style={{ ...inputStyle, cursor: 'not-allowed' }} />
+              </div>
+            </div>
+
+            {/* Interest — editable */}
+            <div>
+              <label style={labelStyle}>
+                <span>Interest ({ratePercent}% × {months} mo)</span>
+                {isModified && (
+                  <button onClick={handleReset} style={{
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    color: '#f59e0b', fontSize: '0.65rem', fontWeight: 700, padding: '1px 4px',
+                    display: 'flex', alignItems: 'center', gap: '3px',
+                  }}>↺ Reset</button>
+                )}
+              </label>
+              <div style={{ ...inputRowStyle, borderColor: isModified ? 'rgba(245,158,11,0.5)' : 'var(--border)' }}>
+                <IndianRupee size={13} color={isModified ? '#f59e0b' : 'var(--text-muted)'} />
+                <input type="number" min="0" step="1" value={interestVal}
+                  onChange={e => handleInterestChange(e.target.value)}
+                  style={{ ...inputStyle, color: isModified ? '#f59e0b' : 'var(--text-primary)' }} />
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>editable</span>
+              </div>
+            </div>
+
+            {/* Total — editable, highlighted */}
+            <div>
+              <label style={labelStyle}>
+                <span>Total to Collect</span>
+                <span style={{ background: 'rgba(99,102,241,0.12)', color: '#8b5cf6', borderRadius: '4px', padding: '1px 6px', fontSize: '0.65rem', fontWeight: 700 }}>= PRINCIPAL + INTEREST</span>
+              </label>
+              <div style={{ ...inputRowStyle, border: '2px solid rgba(99,102,241,0.5)', background: 'rgba(99,102,241,0.06)' }}>
+                <IndianRupee size={14} color="#6366f1" />
+                <input type="number" min="0" step="1" value={totalVal}
+                  onChange={e => handleTotalChange(e.target.value)}
+                  style={{ ...inputStyle, fontSize: '1.1rem', color: '#8b5cf6' }} />
+              </div>
             </div>
           </div>
 
           {/* Info note */}
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start', background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 'var(--radius-md)', padding: '0.6rem 0.875rem' }}>
-            <AlertCircle size={14} color="#f59e0b" style={{ flexShrink: 0, marginTop: '2px' }} />
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-              Interest is charged per full/partial month. Even 1 day into a new month counts as a full extra month.
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start', background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 'var(--radius-md)', padding: '0.5rem 0.75rem' }}>
+            <AlertCircle size={13} color="#f59e0b" style={{ flexShrink: 0, marginTop: '2px' }} />
+            <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+              Interest &amp; total are editable — adjust if the customer pays more or less. Editing either field syncs the other automatically.
             </span>
           </div>
 
@@ -203,12 +278,12 @@ function ReleaseModal({ girvi, onClose, onConfirm, loading }) {
             </button>
             <button
               className="btn btn-primary"
-              onClick={() => onConfirm({ rate, months, interest, total })}
+              onClick={() => onConfirm({ rate: ratePercent, months, interest, total })}
               style={{ flex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
               disabled={loading}
             >
               {loading ? <Loader2 size={16} className="spin" /> : <Unlock size={16} />}
-              {loading ? 'Releasing…' : `Confirm Release — ₹${total.toLocaleString('en-IN')}`}
+              {loading ? 'Releasing…' : `Confirm — ₹${Number(total).toLocaleString('en-IN')}`}
             </button>
           </div>
         </div>
@@ -216,6 +291,9 @@ function ReleaseModal({ girvi, onClose, onConfirm, loading }) {
     </div>
   );
 }
+
+
+
 
 /* ─── Ledger Page ────────────────────────────────────────────── */
 export default function Ledger() {
