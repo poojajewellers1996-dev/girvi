@@ -326,14 +326,45 @@ def get_girvi_stats(db: Session = Depends(get_db), token: dict = Depends(get_cur
     active_loan_amount = db.query(func.sum(models.Girvi.loan_amount)).filter(models.Girvi.status == 'Active').scalar() or 0
     released_loan_amount = db.query(func.sum(models.Girvi.loan_amount)).filter(models.Girvi.status == 'Released').scalar() or 0
 
+    # Calculate Gold vs Silver weight & loan amounts from active Girvi articles
+    articles = db.query(models.Article).join(models.Girvi).filter(models.Girvi.status == 'Active').all()
+    
+    gold_weight = 0.0
+    gold_loan_amount = 0.0
+    silver_weight = 0.0
+    silver_loan_amount = 0.0
+
+    for art in articles:
+        name_lower = (art.name or '').lower()
+        net_wt = float(art.net_wt or 0.0)
+        loan_amt = float(art.loan_amount or 0.0)
+
+        if 'silver' in name_lower:
+            silver_weight += net_wt
+            silver_loan_amount += loan_amt
+        else:
+            gold_weight += net_wt
+            gold_loan_amount += loan_amt
+
+    # Total interest collected from Ledger Transactions
+    total_interest_collected = db.query(func.sum(models.LedgerTransaction.amount)).filter(
+        models.LedgerTransaction.transaction_type == 'INTEREST_PAID'
+    ).scalar() or 0.0
+
     return {
         "total_girvis": total_girvis,
         "active_girvis": active_girvis,
         "released_girvis": released_girvis,
         "total_loan_amount": total_loan_amount,
         "active_loan_amount": active_loan_amount,
-        "released_loan_amount": released_loan_amount
+        "released_loan_amount": released_loan_amount,
+        "gold_weight": round(gold_weight, 2),
+        "gold_loan_amount": round(gold_loan_amount, 2),
+        "silver_weight": round(silver_weight, 2),
+        "silver_loan_amount": round(silver_loan_amount, 2),
+        "total_interest_collected": round(total_interest_collected, 2)
     }
+
 
 @app.get("/girvi/{girvi_id}", response_model=schemas.GirviRead)
 def get_girvi(

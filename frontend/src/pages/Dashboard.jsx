@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../api/client';
-import { Loader, TrendingUp, Users, CheckCircle, IndianRupee } from 'lucide-react';
+import { Loader, Users, CheckCircle, IndianRupee, Scale, Coins, Percent } from 'lucide-react';
 import {
   PieChart,
   Pie,
@@ -58,17 +58,17 @@ export default function Dashboard() {
     { name: 'Released Girvis', value: stats?.released_girvis || 0 }
   ];
 
-  const StatCard = ({ title, value, icon, subtitle }) => (
-    <div className="card" style={{ display: 'flex', flexDirection: 'column', padding: '1.5rem', gap: '0.5rem' }}>
+  const StatCard = ({ title, value, icon, subtitle, color }) => (
+    <div className="card" style={{ display: 'flex', flexDirection: 'column', padding: '1.25rem', gap: '0.4rem', background: 'var(--bg-surface)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'var(--text-muted)' }}>
-        <h3 style={{ fontSize: '1rem', margin: 0, fontWeight: 500 }}>{title}</h3>
+        <span style={{ fontSize: '0.8rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{title}</span>
         {icon}
       </div>
-      <div style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--text-color)' }}>
+      <div style={{ fontSize: '1.6rem', fontWeight: 800, color: color || 'var(--text-primary)' }}>
         {value}
       </div>
       {subtitle && (
-        <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
           {subtitle}
         </div>
       )}
@@ -76,40 +76,82 @@ export default function Dashboard() {
   );
 
   return (
-    <div className="container mt-6">
+    <div className="container mt-6 animate-fade-in" style={{ paddingBottom: '2rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
         <div>
-          <h2>Analytics Dashboard</h2>
-          <p style={{ color: 'var(--text-muted)' }}>High-level overview of your Girvi business</p>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: '700', margin: 0 }}>Analytics Dashboard</h2>
+          <p style={{ color: 'var(--text-muted)', margin: 0, marginTop: '2px', fontSize: '0.875rem' }}>High-level overview of your Girvi & Gold/Silver business</p>
         </div>
       </div>
 
-      {/* Metrics Row */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+      {/* Row 1: Primary Overview Metrics */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem', marginBottom: '1.25rem' }}>
         <StatCard 
           title="Total Girvis" 
           value={stats?.total_girvis || 0} 
-          icon={<Users size={20} />} 
+          icon={<Users size={20} color="#6366f1" />} 
           subtitle="All time records"
+          color="#6366f1"
         />
         <StatCard 
           title="Active Loan Amount" 
-          value={`₹${(stats?.active_loan_amount || 0).toLocaleString()}`} 
-          icon={<IndianRupee size={20} />} 
+          value={`₹${(stats?.active_loan_amount || 0).toLocaleString('en-IN')}`} 
+          icon={<IndianRupee size={20} color="#10b981" />} 
           subtitle="Currently out on loan"
+          color="#10b981"
         />
         <StatCard 
           title="Released Loan Amount" 
-          value={`₹${(stats?.released_loan_amount || 0).toLocaleString()}`} 
-          icon={<CheckCircle size={20} color="var(--success)" />} 
+          value={`₹${(stats?.released_loan_amount || 0).toLocaleString('en-IN')}`} 
+          icon={<CheckCircle size={20} color="#8b5cf6" />} 
           subtitle="Total loans recovered"
+          color="#8b5cf6"
+        />
+        <StatCard 
+          title="Total Interest Collected" 
+          value={`₹${(stats?.total_interest_collected || 0).toLocaleString('en-IN')}`} 
+          icon={<Coins size={20} color="#f59e0b" />} 
+          subtitle="From ledger transactions"
+          color="#f59e0b"
+        />
+      </div>
+
+      {/* Row 2: Gold & Silver Specific Metrics */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem', marginBottom: '2rem' }}>
+        <StatCard 
+          title="🥇 Gold Girvi Weight" 
+          value={`${(stats?.gold_weight || 0).toFixed(2)} g`} 
+          icon={<Scale size={20} color="#f59e0b" />} 
+          subtitle="Total active Gold weight"
+          color="#f59e0b"
+        />
+        <StatCard 
+          title="🥇 Total Gold Loan" 
+          value={`₹${(stats?.gold_loan_amount || 0).toLocaleString('en-IN')}`} 
+          icon={<IndianRupee size={20} color="#f59e0b" />} 
+          subtitle="Active Gold loan principal"
+          color="#f59e0b"
+        />
+        <StatCard 
+          title="🥈 Silver Girvi Weight" 
+          value={`${(stats?.silver_weight || 0).toFixed(2)} g`} 
+          icon={<Scale size={20} color="#94a3b8" />} 
+          subtitle="Total active Silver weight"
+          color="#94a3b8"
+        />
+        <StatCard 
+          title="🥈 Total Silver Loan" 
+          value={`₹${(stats?.silver_loan_amount || 0).toLocaleString('en-IN')}`} 
+          icon={<IndianRupee size={20} color="#94a3b8" />} 
+          subtitle="Active Silver loan principal"
+          color="#94a3b8"
         />
       </div>
 
       {/* Charts Row */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem' }}>
         <div className="card">
-          <h3 style={{ marginBottom: '1.5rem' }}>Girvi Status Breakdown</h3>
+          <h3 style={{ marginBottom: '1.5rem', fontSize: '1.1rem', fontWeight: 600 }}>Girvi Status Breakdown</h3>
           {stats?.total_girvis === 0 ? (
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '300px', color: 'var(--text-muted)' }}>
               No data available to display chart
