@@ -5,33 +5,55 @@ export default function CalculatorPage() {
   const [loanAmount, setLoanAmount] = useState(1000);
   const [rate, setRate] = useState(1.16);
 
-  // Default Pledge Date: 30 days ago for quick test
+  // Default Pledge Date: 12-06-2026 for demonstration
   const todayStr = new Date().toISOString().split('T')[0];
-  const defaultPledge = new Date();
-  defaultPledge.setDate(defaultPledge.getDate() - 32); // Default to 32 days for instant demo
-  const pledgeStr = defaultPledge.toISOString().split('T')[0];
-
-  const [pledgeDate, setPledgeDate] = useState(pledgeStr);
+  const [pledgeDate, setPledgeDate] = useState('2026-06-12');
   const [presentDate, setPresentDate] = useState(todayStr);
 
-  // Calculate elapsed days
-  const getElapsedDays = (pStr, prStr) => {
-    if (!pStr || !prStr) return 0;
+  /**
+   * Calendar-aware pawn shop duration calculation:
+   * Compares Pledge Date (d1-m1-y1) and Present Date (d2-m2-y2).
+   * Calculates Full Months and Remaining Days (where 1 month = 30 days equivalent).
+   */
+  const getCalendarDuration = (pStr, prStr) => {
+    if (!pStr || !prStr) return { fullMonths: 0, extraDays: 0, totalDays: 0, formattedText: '0 days' };
     const pDate = new Date(pStr);
     const prDate = new Date(prStr);
-    pDate.setHours(0, 0, 0, 0);
-    prDate.setHours(0, 0, 0, 0);
 
-    const diffTime = prDate.getTime() - pDate.getTime();
-    const days = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    return Math.max(0, days);
+    if (prDate <= pDate) return { fullMonths: 0, extraDays: 0, totalDays: 0, formattedText: '0 days' };
+
+    let fullMonths = (prDate.getFullYear() - pDate.getFullYear()) * 12 + (prDate.getMonth() - pDate.getMonth());
+    let extraDays = prDate.getDate() - pDate.getDate();
+
+    if (extraDays < 0) {
+      fullMonths -= 1;
+      // Days in previous month
+      const prevMonthLastDay = new Date(prDate.getFullYear(), prDate.getMonth(), 0).getDate();
+      extraDays += prevMonthLastDay;
+    }
+
+    fullMonths = Math.max(0, fullMonths);
+    extraDays = Math.max(0, extraDays);
+
+    const totalDays = (fullMonths * 30) + extraDays;
+
+    let formattedText = '';
+    if (fullMonths > 0 && extraDays > 0) {
+      formattedText = `${fullMonths} Month${fullMonths > 1 ? 's' : ''} & ${extraDays} Day${extraDays > 1 ? 's' : ''} (${totalDays} Days equivalent)`;
+    } else if (fullMonths > 0) {
+      formattedText = `${fullMonths} Month${fullMonths > 1 ? 's' : ''} (${totalDays} Days equivalent)`;
+    } else {
+      formattedText = `${extraDays} Day${extraDays > 1 ? 's' : ''}`;
+    }
+
+    return { fullMonths, extraDays, totalDays, formattedText };
   };
 
-  const daysElapsed = getElapsedDays(pledgeDate, presentDate);
+  const duration = getCalendarDuration(pledgeDate, presentDate);
   const principal = Number(loanAmount) || 0;
   const monthlyRate = Number(rate) || 0;
 
-  // Perform Calculation based on custom business rules
+  // Perform Calculation based on custom pawn shop business rules
   const calculateResult = () => {
     if (principal <= 0 || monthlyRate <= 0) {
       return {
@@ -46,40 +68,45 @@ export default function CalculatorPage() {
     const fullMonthInterest = principal * (monthlyRate / 100);
     const dailyRate = fullMonthInterest / 30;
 
+    const { fullMonths, extraDays, totalDays } = duration;
     let interestAmount = 0;
     let ruleApplied = '';
     let breakdown = [];
 
-    if (daysElapsed <= 0) {
+    if (totalDays <= 0) {
       interestAmount = 0;
       ruleApplied = '0 days (Same day calculation)';
-      breakdown.push({ label: 'Days Elapsed', val: '0 days' });
+      breakdown.push({ label: 'Duration', val: '0 days' });
       breakdown.push({ label: 'Interest Charged', val: '₹0.00' });
-    } else if (daysElapsed <= 15) {
+    } else if (fullMonths === 0 && extraDays <= 15) {
       // 1 - 15 days = Half Month Interest (0.5 month)
       interestAmount = fullMonthInterest * 0.5;
       ruleApplied = '1 to 15 Days Rule (Fixed 0.5 Month Interest)';
-      breakdown.push({ label: '1 to 15 Days Tier', val: `${daysElapsed} days (<= 15 days)` });
+      breakdown.push({ label: 'Duration', val: `${extraDays} days (<= 15 days)` });
       breakdown.push({ label: 'Calculation Formula', val: `₹${principal} × ${monthlyRate}% × 0.5 month` });
       breakdown.push({ label: 'Half Month Interest', val: `₹${interestAmount.toFixed(2)}` });
-    } else if (daysElapsed <= 30) {
+    } else if (fullMonths === 0 && extraDays <= 30) {
       // 16 - 30 days = Complete 1 Month Interest (1.0 month)
       interestAmount = fullMonthInterest * 1.0;
       ruleApplied = '16 to 30 Days Rule (Fixed 1 Complete Month Interest)';
-      breakdown.push({ label: '16 to 30 Days Tier', val: `${daysElapsed} days (<= 30 days)` });
+      breakdown.push({ label: 'Duration', val: `${extraDays} days (16 to 30 days)` });
       breakdown.push({ label: 'Calculation Formula', val: `₹${principal} × ${monthlyRate}% × 1.0 month` });
-      breakdown.push({ label: 'Full Month Interest', val: `₹${interestAmount.toFixed(2)}` });
+      breakdown.push({ label: 'Full 1 Month Interest', val: `₹${interestAmount.toFixed(2)}` });
     } else {
-      // > 30 days: First 30 days = Full 1 Month Interest + extra days * (Monthly Interest / 30)
-      const extraDays = daysElapsed - 30;
+      // > 30 days: (fullMonths * fullMonthInterest) + (extraDays * dailyRate)
+      const baseMonthsInterest = fullMonths * fullMonthInterest;
       const extraDaysInterest = extraDays * dailyRate;
-      interestAmount = fullMonthInterest + extraDaysInterest;
-      ruleApplied = `30 Days Base + ${extraDays} Extra Days (Day-wise calculation after 30 days)`;
+      interestAmount = baseMonthsInterest + extraDaysInterest;
 
-      breakdown.push({ label: 'First 30 Days (Base 1 Month)', val: `₹${fullMonthInterest.toFixed(2)}` });
+      ruleApplied = `${fullMonths} Month${fullMonths > 1 ? 's' : ''} Base + ${extraDays} Extra Day${extraDays > 1 ? 's' : ''} (Day-wise calculation for extra days)`;
+
+      breakdown.push({ label: 'Calendar Duration', val: duration.formattedText });
+      breakdown.push({ label: `${fullMonths} Full Month(s) Interest`, val: `${fullMonths} × ₹${fullMonthInterest.toFixed(2)} = ₹${baseMonthsInterest.toFixed(2)}` });
       breakdown.push({ label: 'Daily Interest Rate', val: `₹${dailyRate.toFixed(4)} / day` });
-      breakdown.push({ label: `Extra ${extraDays} Day(s) Interest`, val: `${extraDays} × ₹${dailyRate.toFixed(4)} = ₹${extraDaysInterest.toFixed(2)}` });
-      breakdown.push({ label: 'Total Calculated Interest', val: `₹${fullMonthInterest.toFixed(2)} + ₹${extraDaysInterest.toFixed(2)} = ₹${interestAmount.toFixed(2)}` });
+      if (extraDays > 0) {
+        breakdown.push({ label: `Extra ${extraDays} Day(s) Interest`, val: `${extraDays} × ₹${dailyRate.toFixed(4)} = ₹${extraDaysInterest.toFixed(2)}` });
+      }
+      breakdown.push({ label: 'Total Calculated Interest', val: `₹${baseMonthsInterest.toFixed(2)} + ₹${extraDaysInterest.toFixed(2)} = ₹${interestAmount.toFixed(2)}` });
     }
 
     return {
@@ -109,7 +136,7 @@ export default function CalculatorPage() {
           <Calculator color="var(--brand-primary)" size={26} /> Interest Calculator
         </h2>
         <p style={{ color: 'var(--text-muted)', margin: '4px 0 0 0', fontSize: '0.875rem' }}>
-          Custom Pawn Shop Interest Calculation (1–15 days = Half Month, 16–30 days = 1 Month, 30+ days = Day-wise)
+          Custom Pawn Shop Interest Calculation (1–15 days = Half Month, 16–30 days = 1 Month, 30+ days = Calendar Months + Day-wise Extra)
         </p>
       </div>
 
@@ -218,20 +245,19 @@ export default function CalculatorPage() {
               />
             </div>
 
-
             {/* Quick Test Duration Buttons */}
             <div>
               <label className="input-label" style={{ marginBottom: '0.3rem' }}>Quick Test Duration:</label>
               <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-                {[15, 30, 32, 45, 60, 90].map(d => (
+                {[15, 30, 45, 60, 90].map(d => (
                   <button
                     key={d}
                     type="button"
                     onClick={() => handleSetPresetDays(d)}
                     style={{
                       padding: '0.3rem 0.6rem', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 600,
-                      border: '1px solid var(--border)', background: daysElapsed === d ? 'var(--brand-primary)' : 'var(--bg-surface-2)',
-                      color: daysElapsed === d ? '#ffffff' : 'var(--text-primary)', cursor: 'pointer'
+                      border: '1px solid var(--border)', background: duration.totalDays === d ? 'var(--brand-primary)' : 'var(--bg-surface-2)',
+                      color: duration.totalDays === d ? '#ffffff' : 'var(--text-primary)', cursor: 'pointer'
                     }}
                   >
                     {d} Days
@@ -251,7 +277,7 @@ export default function CalculatorPage() {
             
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '0.75rem', marginBottom: '1rem' }}>
               <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                Duration: <strong style={{ color: 'var(--brand-primary)' }}>{daysElapsed} Days</strong>
+                Duration: <strong style={{ color: 'var(--brand-primary)' }}>{duration.formattedText}</strong>
               </span>
               <span style={{ fontSize: '0.75rem', fontWeight: 700, background: 'var(--brand-primary-light)', color: 'var(--brand-primary)', padding: '0.2rem 0.6rem', borderRadius: '99px' }}>
                 Rate: {monthlyRate}% / month
@@ -310,7 +336,7 @@ export default function CalculatorPage() {
             <ul style={{ margin: '4px 0 0 1.2rem', padding: 0 }}>
               <li>1 to 15 days = Half month interest (`Loan × Rate × 0.5`)</li>
               <li>16 to 30 days = Full 1 month interest (`Loan × Rate × 1.0`)</li>
-              <li>30+ days = 1 Month Fixed + Extra Days (`Extra Days × (Monthly Interest / 30)`)</li>
+              <li>Calendar Months = Full month count from Date to Date + Extra Days (`Extra Days × (Monthly Interest / 30)`)</li>
             </ul>
           </div>
 
