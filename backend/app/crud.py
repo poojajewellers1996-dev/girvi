@@ -5,7 +5,7 @@ import hmac
 import time
 import datetime
 from typing import Optional
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from . import models, schemas, config
 from .config import settings
 from .models import User, OTP, Company, Girvi, Article, Repledge, SystemLog
