@@ -184,7 +184,12 @@ def list_girvis(db: Session, skip: int = 0, limit: int = 100):
 from .models import User, OTP, Company, Girvi, Article, Repledge, RepledgeTransaction, SystemLog
 
 def list_repledges(db: Session):
-    return db.query(Repledge).options(joinedload(Repledge.girvis), joinedload(Repledge.transactions)).order_by(Repledge.id.desc()).all()
+    try:
+        return db.query(Repledge).options(joinedload(Repledge.girvis), joinedload(Repledge.transactions)).order_by(Repledge.id.desc()).all()
+    except Exception:
+        db.rollback()
+        return db.query(Repledge).options(joinedload(Repledge.girvis)).order_by(Repledge.id.desc()).all()
+
 
 def create_repledge_transaction(db: Session, repledge_id: int, data: schemas.RepledgeTransactionCreate):
     t = RepledgeTransaction(

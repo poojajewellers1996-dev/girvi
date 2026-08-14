@@ -9,6 +9,7 @@ import uuid
 from typing import List, Optional
 
 from fastapi import FastAPI, Depends, HTTPException, status, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
@@ -19,7 +20,7 @@ from twilio.rest import Client
 
 from sqlalchemy import text
 # ─── Create all DB tables ─────────────────────────────────────────────────────
-Base.metadata.create_all(bind=engine)
+models.Base.metadata.create_all(bind=engine)
 
 try:
     with engine.begin() as conn:
@@ -40,6 +41,7 @@ except Exception:
     pass
 
 # ─── JWT helpers ──────────────────────────────────────────────────────────────
+
 
 def _b64_encode(data: bytes) -> str:
     return base64.urlsafe_b64encode(data).rstrip(b"=").decode()
@@ -88,6 +90,14 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    return JSONResponse(
+        status_code=500,
+        content={"detail": str(exc)},
+    )
+
 
 # ─── Auth dependency ──────────────────────────────────────────────────────────
 
