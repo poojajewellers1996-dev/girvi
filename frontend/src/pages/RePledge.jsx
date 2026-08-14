@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../api/client';
-import { Loader2, ChevronDown, ChevronUp, ExternalLink, Calendar, Landmark, Search, Plus, Trash2, IndianRupee, Unlock, CheckCircle, Clock } from 'lucide-react';
+import { Loader2, ChevronDown, ChevronUp, ExternalLink, Calendar, Landmark, Search, Plus, Trash2, IndianRupee, Unlock, CheckCircle, Clock, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { exportBankRePledges, exportInterestReport } from '../utils/exportUtils';
+
 
 export default function RePledge() {
   const [repledges, setRepledges] = useState([]);
@@ -161,21 +163,45 @@ export default function RePledge() {
   return (
     <div className="animate-fade-in">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-        <h2 style={{ fontSize: '1.5rem', fontWeight: '700', margin: 0 }}>Bank Re-Pledge Dashboard</h2>
-        <div style={{ position: 'relative', minWidth: '250px' }}>
-          <div style={{ position: 'absolute', top: '50%', left: '12px', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}>
-            <Search size={18} />
+        <div>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: '700', margin: 0 }}>Bank Re-Pledge Dashboard</h2>
+          <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '0.875rem' }}>Track bank loans and interest payment logs</p>
+        </div>
+
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          <button 
+            className="btn btn-secondary" 
+            onClick={() => exportBankRePledges(filteredRepledges)}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem' }}
+            title="Export full bank loan statement to Excel / CSV"
+          >
+            <Download size={16} color="#10b981" /> Export Bank Report
+          </button>
+          <button 
+            className="btn btn-secondary" 
+            onClick={() => exportInterestReport(filteredRepledges)}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem' }}
+            title="Export date-wise interest collection log to Excel / CSV"
+          >
+            <Download size={16} color="#f59e0b" /> Interest Log Report
+          </button>
+
+          <div style={{ position: 'relative', minWidth: '220px' }}>
+            <div style={{ position: 'absolute', top: '50%', left: '12px', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}>
+              <Search size={16} />
+            </div>
+            <input 
+              type="text" 
+              placeholder="Search by loan no, bank, name..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="input-field"
+              style={{ paddingLeft: '38px', margin: 0, fontSize: '0.85rem' }}
+            />
           </div>
-          <input 
-            type="text" 
-            placeholder="Search by loan no, bank, name..." 
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="input-field"
-            style={{ paddingLeft: '40px', margin: 0 }}
-          />
         </div>
       </div>
+
 
       <div style={{
         display: 'grid',
