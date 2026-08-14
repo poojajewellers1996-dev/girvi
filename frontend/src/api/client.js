@@ -114,6 +114,14 @@ export const api = {
   deleteTransaction: (transactionId) => request(`/transactions/${transactionId}`, {
     method: 'DELETE'
   }),
+  addRepledgeTransaction: (repledgeId, data) => request(`/repledge/${repledgeId}/transactions`, {
+    method: 'POST',
+    body: JSON.stringify(data)
+  }),
+  deleteRepledgeTransaction: (transactionId) => request(`/repledge/transactions/${transactionId}`, {
+    method: 'DELETE'
+  }),
+
   
   // Settings & Logs
   getLogs: () => request('/logs'),

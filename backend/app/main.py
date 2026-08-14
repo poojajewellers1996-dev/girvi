@@ -253,6 +253,33 @@ def list_repledges(
 ):
     return [schemas.RepledgeRead.model_validate(r) for r in crud.list_repledges(db)]
 
+@app.post("/repledge/{repledge_id}/transactions", response_model=schemas.RepledgeTransactionRead)
+def create_repledge_transaction(
+    repledge_id: int,
+    data: schemas.RepledgeTransactionCreate,
+    db: Session = Depends(get_db),
+    token: dict = Depends(get_current_user),
+):
+    rep = db.query(models.Repledge).filter(models.Repledge.id == repledge_id).first()
+    if not rep:
+        raise HTTPException(status_code=404, detail="Bank repledge not found")
+    new_t = crud.create_repledge_transaction(db, repledge_id, data)
+    log_system_action(db, "REPLEDGE_INTEREST_ADD", f"Added bank interest payment of ₹{data.amount} on Loan #{rep.loan_number}", module="REPLEDGE")
+    return schemas.RepledgeTransactionRead.model_validate(new_t)
+
+@app.delete("/repledge/transactions/{transaction_id}")
+def delete_repledge_transaction(
+    transaction_id: int,
+    db: Session = Depends(get_db),
+    token: dict = Depends(get_current_user),
+):
+    deleted = crud.delete_repledge_transaction(db, transaction_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+    log_system_action(db, "REPLEDGE_INTEREST_DELETE", f"Deleted bank interest payment #{transaction_id}", module="REPLEDGE")
+    return {"status": "deleted"}
+
+
 @app.get("/girvi/stats")
 def get_girvi_stats(db: Session = Depends(get_db), token: dict = Depends(get_current_user)):
     from sqlalchemy import func

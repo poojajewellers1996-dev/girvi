@@ -71,6 +71,19 @@ class Repledge(Base):
     amount = Column(Float, nullable=False)
     created_at = Column(DateTime, server_default=func.now())
     girvis = relationship("Girvi", secondary="girvi_repledges", back_populates="repledges")
+    transactions = relationship("RepledgeTransaction", back_populates="repledge", cascade="all, delete-orphan")
+
+
+class RepledgeTransaction(Base):
+    __tablename__ = "repledge_transactions"
+    id = Column(Integer, primary_key=True, index=True)
+    repledge_id = Column(Integer, ForeignKey("repledges.id", ondelete="CASCADE"), nullable=False)
+    amount = Column(Float, nullable=False)
+    payment_date = Column(DateTime, server_default=func.now())
+    remarks = Column(Text, nullable=True)
+    
+    repledge = relationship("Repledge", back_populates="transactions")
+
 
 
 class GirviRepledge(Base):

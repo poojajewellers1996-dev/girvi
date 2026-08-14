@@ -181,10 +181,30 @@ def get_girvi(db: Session, girvi_id: int) -> Optional[Girvi]:
 def list_girvis(db: Session, skip: int = 0, limit: int = 100):
     return db.query(Girvi).order_by(Girvi.id.desc()).offset(skip).limit(limit).all()
 
-from sqlalchemy.orm import joinedload
+from .models import User, OTP, Company, Girvi, Article, Repledge, RepledgeTransaction, SystemLog
 
 def list_repledges(db: Session):
-    return db.query(Repledge).options(joinedload(Repledge.girvis)).order_by(Repledge.id.desc()).all()
+    return db.query(Repledge).options(joinedload(Repledge.girvis), joinedload(Repledge.transactions)).order_by(Repledge.id.desc()).all()
+
+def create_repledge_transaction(db: Session, repledge_id: int, data: schemas.RepledgeTransactionCreate):
+    t = RepledgeTransaction(
+        repledge_id=repledge_id,
+        amount=data.amount,
+        payment_date=data.payment_date or datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None),
+        remarks=data.remarks
+    )
+    db.add(t)
+    db.commit()
+    db.refresh(t)
+    return t
+
+def delete_repledge_transaction(db: Session, transaction_id: int):
+    t = db.query(RepledgeTransaction).filter(RepledgeTransaction.id == transaction_id).first()
+    if t:
+        db.delete(t)
+        db.commit()
+    return t
+
 
 def delete_girvi(db: Session, girvi_id: int):
     girvi = get_girvi(db, girvi_id)
