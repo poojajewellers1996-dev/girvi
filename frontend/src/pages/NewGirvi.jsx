@@ -139,6 +139,7 @@ export default function NewGirvi() {
               relation_name: customer.relation_name || prev.relation_name,
               address: customer.address || prev.address,
               monthly_income: customer.monthly_income || prev.monthly_income,
+              photo_path: customer.photo_path || prev.photo_path,
             }));
           }
         } catch (err) {
