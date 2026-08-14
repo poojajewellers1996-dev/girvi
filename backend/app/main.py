@@ -254,6 +254,7 @@ def list_repledges(
     return [schemas.RepledgeRead.model_validate(r) for r in crud.list_repledges(db)]
 
 @app.post("/repledge/{repledge_id}/transactions", response_model=schemas.RepledgeTransactionRead)
+@app.post("/repledge/{repledge_id}/transactions/", response_model=schemas.RepledgeTransactionRead)
 def create_repledge_transaction(
     repledge_id: int,
     data: schemas.RepledgeTransactionCreate,
@@ -268,6 +269,7 @@ def create_repledge_transaction(
     return schemas.RepledgeTransactionRead.model_validate(new_t)
 
 @app.delete("/repledge/transactions/{transaction_id}")
+@app.delete("/repledge/transactions/{transaction_id}/")
 def delete_repledge_transaction(
     transaction_id: int,
     db: Session = Depends(get_db),
@@ -278,6 +280,7 @@ def delete_repledge_transaction(
         raise HTTPException(status_code=404, detail="Transaction not found")
     log_system_action(db, "REPLEDGE_INTEREST_DELETE", f"Deleted bank interest payment #{transaction_id}", module="REPLEDGE")
     return {"status": "deleted"}
+
 
 
 @app.get("/girvi/stats")
