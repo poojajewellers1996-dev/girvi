@@ -189,9 +189,22 @@ def list_repledges(db: Session):
 def delete_girvi(db: Session, girvi_id: int):
     girvi = get_girvi(db, girvi_id)
     if girvi:
+        # Collect repledge IDs linked to this girvi BEFORE deleting
+        linked_repledge_ids = [r.id for r in girvi.repledges]
+
         db.delete(girvi)
         db.commit()
+
+        # After the girvi (and its girvi_repledges rows) are gone,
+        # delete any Repledge records that now have no linked girvis (orphans)
+        for rid in linked_repledge_ids:
+            rep = db.query(Repledge).filter(Repledge.id == rid).first()
+            if rep and len(rep.girvis) == 0:
+                db.delete(rep)
+        db.commit()
+
     return girvi
+
 
 def update_girvi_status(db: Session, girvi_id: int, status: str):
     girvi = get_girvi(db, girvi_id)
