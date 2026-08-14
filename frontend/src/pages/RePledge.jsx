@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../api/client';
-import { Loader2, ChevronDown, ChevronUp, ExternalLink, Calendar, Landmark, Search, Plus, Trash2, IndianRupee, Unlock } from 'lucide-react';
+import { Loader2, ChevronDown, ChevronUp, ExternalLink, Calendar, Landmark, Search, Plus, Trash2, IndianRupee, Unlock, CheckCircle, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export default function RePledge() {
@@ -141,6 +141,8 @@ export default function RePledge() {
 
   // Calculate totals
   const totalBankLoans = filteredRepledges.length;
+  const activeBankLoans = filteredRepledges.filter(r => r.status !== 'Released').length;
+  const releasedBankLoans = filteredRepledges.filter(r => r.status === 'Released').length;
   const totalRepledgedAmount = filteredRepledges.reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
   const totalLinkedGirvis = filteredRepledges.reduce((sum, r) => sum + (r.girvis?.length || 0), 0);
   const totalInterestPaidAll = filteredRepledges.reduce((sum, r) => {
@@ -177,7 +179,7 @@ export default function RePledge() {
 
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))',
         gap: '1rem',
         marginBottom: '1.5rem'
       }}>
@@ -186,8 +188,28 @@ export default function RePledge() {
             <div style={{ color: 'var(--text-muted)', fontSize: '0.725rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Bank Loans</div>
             <div style={{ fontSize: '1.4rem', fontWeight: '800', color: 'var(--text-primary)', marginTop: '0.2rem' }}>{totalBankLoans}</div>
           </div>
-          <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(99, 102, 241, 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6366f1' }}>
-            <Landmark size={20} />
+          <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: 'rgba(99, 102, 241, 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6366f1' }}>
+            <Landmark size={18} />
+          </div>
+        </div>
+
+        <div className="card" style={{ padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.725rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Active Loans</div>
+            <div style={{ fontSize: '1.4rem', fontWeight: '800', color: '#10b981', marginTop: '0.2rem' }}>{activeBankLoans}</div>
+          </div>
+          <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: 'rgba(16, 185, 129, 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10b981' }}>
+            <Clock size={18} />
+          </div>
+        </div>
+
+        <div className="card" style={{ padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.725rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Released Loans</div>
+            <div style={{ fontSize: '1.4rem', fontWeight: '800', color: '#8b5cf6', marginTop: '0.2rem' }}>{releasedBankLoans}</div>
+          </div>
+          <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: 'rgba(139, 92, 246, 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8b5cf6' }}>
+            <CheckCircle size={18} />
           </div>
         </div>
 
@@ -196,8 +218,8 @@ export default function RePledge() {
             <div style={{ color: 'var(--text-muted)', fontSize: '0.725rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Repledge Amount</div>
             <div style={{ fontSize: '1.4rem', fontWeight: '800', color: '#10b981', marginTop: '0.2rem' }}>₹{totalRepledgedAmount.toLocaleString('en-IN')}</div>
           </div>
-          <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(16, 185, 129, 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10b981' }}>
-            <IndianRupee size={20} />
+          <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: 'rgba(16, 185, 129, 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10b981' }}>
+            <IndianRupee size={18} />
           </div>
         </div>
 
@@ -206,8 +228,8 @@ export default function RePledge() {
             <div style={{ color: 'var(--text-muted)', fontSize: '0.725rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Interest Paid</div>
             <div style={{ fontSize: '1.4rem', fontWeight: '800', color: '#f59e0b', marginTop: '0.2rem' }}>₹{totalInterestPaidAll.toLocaleString('en-IN')}</div>
           </div>
-          <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(245, 158, 11, 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#f59e0b' }}>
-            <IndianRupee size={20} />
+          <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: 'rgba(245, 158, 11, 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#f59e0b' }}>
+            <IndianRupee size={18} />
           </div>
         </div>
 
@@ -216,11 +238,12 @@ export default function RePledge() {
             <div style={{ color: 'var(--text-muted)', fontSize: '0.725rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Linked Girvis</div>
             <div style={{ fontSize: '1.4rem', fontWeight: '800', color: '#8b5cf6', marginTop: '0.2rem' }}>{totalLinkedGirvis}</div>
           </div>
-          <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(139, 92, 246, 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8b5cf6' }}>
-            <ExternalLink size={20} />
+          <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: 'rgba(139, 92, 246, 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8b5cf6' }}>
+            <ExternalLink size={18} />
           </div>
         </div>
       </div>
+
 
       {error && (
         <div style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', color: 'rgb(239, 68, 68)', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem' }}>
