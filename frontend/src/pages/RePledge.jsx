@@ -161,24 +161,53 @@ export default function RePledge() {
         </div>
       </div>
 
-      <div className="grid" style={{ marginBottom: '2rem', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
-        <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', fontWeight: '600', textTransform: 'uppercase' }}>Total Bank Loans</div>
-          <div style={{ fontSize: '1.75rem', fontWeight: '700', color: 'var(--primary-color)' }}>{totalBankLoans}</div>
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+        gap: '1rem',
+        marginBottom: '1.5rem'
+      }}>
+        <div className="card" style={{ padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.725rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Bank Loans</div>
+            <div style={{ fontSize: '1.4rem', fontWeight: '800', color: 'var(--text-primary)', marginTop: '0.2rem' }}>{totalBankLoans}</div>
+          </div>
+          <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(99, 102, 241, 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6366f1' }}>
+            <Landmark size={20} />
+          </div>
         </div>
-        <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', fontWeight: '600', textTransform: 'uppercase' }}>Total Repledge Amount</div>
-          <div style={{ fontSize: '1.75rem', fontWeight: '700', color: '#10b981' }}>₹{totalRepledgedAmount.toLocaleString('en-IN')}</div>
+
+        <div className="card" style={{ padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.725rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Repledge Amount</div>
+            <div style={{ fontSize: '1.4rem', fontWeight: '800', color: '#10b981', marginTop: '0.2rem' }}>₹{totalRepledgedAmount.toLocaleString('en-IN')}</div>
+          </div>
+          <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(16, 185, 129, 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10b981' }}>
+            <IndianRupee size={20} />
+          </div>
         </div>
-        <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', fontWeight: '600', textTransform: 'uppercase' }}>Total Interest Paid</div>
-          <div style={{ fontSize: '1.75rem', fontWeight: '700', color: '#f59e0b' }}>₹{totalInterestPaidAll.toLocaleString('en-IN')}</div>
+
+        <div className="card" style={{ padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.725rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Interest Paid</div>
+            <div style={{ fontSize: '1.4rem', fontWeight: '800', color: '#f59e0b', marginTop: '0.2rem' }}>₹{totalInterestPaidAll.toLocaleString('en-IN')}</div>
+          </div>
+          <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(245, 158, 11, 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#f59e0b' }}>
+            <IndianRupee size={20} />
+          </div>
         </div>
-        <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', fontWeight: '600', textTransform: 'uppercase' }}>Total Linked Girvis</div>
-          <div style={{ fontSize: '1.75rem', fontWeight: '700', color: '#8b5cf6' }}>{totalLinkedGirvis}</div>
+
+        <div className="card" style={{ padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.725rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Linked Girvis</div>
+            <div style={{ fontSize: '1.4rem', fontWeight: '800', color: '#8b5cf6', marginTop: '0.2rem' }}>{totalLinkedGirvis}</div>
+          </div>
+          <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(139, 92, 246, 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8b5cf6' }}>
+            <ExternalLink size={20} />
+          </div>
         </div>
       </div>
+
 
       {error && (
         <div style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', color: 'rgb(239, 68, 68)', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem' }}>
