@@ -113,8 +113,10 @@ export default function ReleaseModal({ girvi, onClose, onConfirm, loading }) {
 
           {/* Release Date */}
           <div className="input-group" style={{ margin: 0 }}>
-            <label className="input-label">Release Date</label>
+            <label htmlFor="release_date" className="input-label">Release Date</label>
             <input
+              id="release_date"
+              name="release_date"
               type="date"
               value={releaseDate}
               onChange={(e) => setReleaseDate(e.target.value)}
@@ -125,8 +127,10 @@ export default function ReleaseModal({ girvi, onClose, onConfirm, loading }) {
 
           {/* Monthly Interest Rate */}
           <div className="input-group" style={{ margin: 0 }}>
-            <label className="input-label">Interest Rate (% per month)</label>
+            <label htmlFor="interest_rate" className="input-label">Interest Rate (% per month)</label>
             <input
+              id="interest_rate"
+              name="interest_rate"
               type="number"
               step="0.1"
               value={rate}
@@ -138,8 +142,10 @@ export default function ReleaseModal({ girvi, onClose, onConfirm, loading }) {
 
           {/* Principal Loan Amount (Non-Editable) */}
           <div className="input-group" style={{ margin: 0 }}>
-            <label className="input-label">Principal Loan Amount (Non-Editable)</label>
+            <label htmlFor="principal_loan_amount" className="input-label">Principal Loan Amount (Non-Editable)</label>
             <input
+              id="principal_loan_amount"
+              name="principal_loan_amount"
               type="text"
               value={`₹${loanAmount.toLocaleString('en-IN')}`}
               readOnly
@@ -150,8 +156,10 @@ export default function ReleaseModal({ girvi, onClose, onConfirm, loading }) {
 
           {/* Interest Amount (Editable) */}
           <div className="input-group" style={{ margin: 0 }}>
-            <label className="input-label" style={{ color: '#d97706' }}>Calculated Interest Amount (Editable ₹)</label>
+            <label htmlFor="interest_amount" className="input-label" style={{ color: '#d97706' }}>Calculated Interest Amount (Editable ₹)</label>
             <input
+              id="interest_amount"
+              name="interest_amount"
               type="number"
               step="1"
               value={interestAmount}
@@ -164,8 +172,10 @@ export default function ReleaseModal({ girvi, onClose, onConfirm, loading }) {
 
           {/* Total Payable Amount (Editable) */}
           <div className="input-group" style={{ margin: 0 }}>
-            <label className="input-label" style={{ color: '#059669' }}>Total Collect Amount (Editable ₹)</label>
+            <label htmlFor="total_collect_amount" className="input-label" style={{ color: '#059669' }}>Total Collect Amount (Editable ₹)</label>
             <input
+              id="total_collect_amount"
+              name="total_collect_amount"
               type="number"
               step="1"
               value={totalAmount}
@@ -175,6 +185,7 @@ export default function ReleaseModal({ girvi, onClose, onConfirm, loading }) {
               required
             />
           </div>
+
 
           {/* Actions */}
           <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>

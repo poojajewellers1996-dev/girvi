@@ -125,7 +125,7 @@ export default function CalculatorPage() {
             
             {/* Loan Amount */}
             <div className="input-group" style={{ margin: 0 }}>
-              <label className="input-label" style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <label htmlFor="calc_loan_amount" className="input-label" style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span>Loan Amount (₹)</span>
                 <span style={{ color: 'var(--brand-primary)', fontWeight: 700 }}>₹{principal.toLocaleString('en-IN')}</span>
               </label>
@@ -134,6 +134,8 @@ export default function CalculatorPage() {
                   <IndianRupee size={16} />
                 </div>
                 <input
+                  id="calc_loan_amount"
+                  name="calc_loan_amount"
                   type="number"
                   step="100"
                   value={loanAmount}
@@ -166,12 +168,14 @@ export default function CalculatorPage() {
 
             {/* Interest Rate */}
             <div className="input-group" style={{ margin: 0 }}>
-              <label className="input-label">Interest Rate (% per month)</label>
+              <label htmlFor="calc_interest_rate" className="input-label">Interest Rate (% per month)</label>
               <div style={{ position: 'relative' }}>
                 <div style={{ position: 'absolute', top: '50%', left: '12px', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}>
                   <Percent size={16} />
                 </div>
                 <input
+                  id="calc_interest_rate"
+                  name="calc_interest_rate"
                   type="number"
                   step="0.01"
                   value={rate}
@@ -186,8 +190,10 @@ export default function CalculatorPage() {
 
             {/* Pledge Date */}
             <div className="input-group" style={{ margin: 0 }}>
-              <label className="input-label">Pledge Date</label>
+              <label htmlFor="calc_pledge_date" className="input-label">Pledge Date</label>
               <input
+                id="calc_pledge_date"
+                name="calc_pledge_date"
                 type="date"
                 value={pledgeDate}
                 onChange={(e) => setPledgeDate(e.target.value)}
@@ -199,8 +205,10 @@ export default function CalculatorPage() {
 
             {/* Present / Release Date */}
             <div className="input-group" style={{ margin: 0 }}>
-              <label className="input-label">Present / Calculation Date</label>
+              <label htmlFor="calc_present_date" className="input-label">Present / Calculation Date</label>
               <input
+                id="calc_present_date"
+                name="calc_present_date"
                 type="date"
                 value={presentDate}
                 onChange={(e) => setPresentDate(e.target.value)}
@@ -209,6 +217,7 @@ export default function CalculatorPage() {
                 required
               />
             </div>
+
 
             {/* Quick Test Duration Buttons */}
             <div>

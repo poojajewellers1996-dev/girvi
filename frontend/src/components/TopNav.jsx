@@ -25,6 +25,8 @@ export default function TopNav({ toggleSidebar }) {
         <div className="search-container" style={{ display: 'flex', alignItems: 'center', backgroundColor: 'var(--background)', borderRadius: 'var(--radius-full)', padding: '0.5rem 1rem', width: '100%', border: '1px solid var(--border)' }}>
           <Search size={18} color="var(--text-muted)" style={{ marginRight: '0.5rem' }} />
           <input 
+            id="global_search"
+            name="global_search"
             type="text" 
             placeholder="Search by number or name..." 
             style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: '0.875rem' }}

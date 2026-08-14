@@ -196,6 +196,8 @@ export default function Ledger() {
               <Search size={16} />
             </div>
             <input
+              id="ledger_search"
+              name="ledger_search"
               type="text"
               placeholder="Search by name, number, date..."
               value={searchTerm}
@@ -208,6 +210,8 @@ export default function Ledger() {
           {/* Status Filter */}
           <div style={{ flex: '0 1 140px' }}>
             <select
+              id="status_filter"
+              name="status_filter"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
               className="input-field"
@@ -222,6 +226,8 @@ export default function Ledger() {
           {/* Metal Filter */}
           <div style={{ flex: '0 1 140px' }}>
             <select
+              id="metal_filter"
+              name="metal_filter"
               value={metalFilter}
               onChange={(e) => setMetalFilter(e.target.value)}
               className="input-field"
@@ -236,6 +242,8 @@ export default function Ledger() {
           {/* Date Range: From Date */}
           <div style={{ flex: '0 1 140px' }}>
             <input
+              id="from_date"
+              name="from_date"
               type="date"
               value={fromDate}
               onChange={(e) => setFromDate(e.target.value)}
@@ -248,6 +256,8 @@ export default function Ledger() {
           {/* Date Range: To Date */}
           <div style={{ flex: '0 1 140px' }}>
             <input
+              id="to_date"
+              name="to_date"
               type="date"
               value={toDate}
               onChange={(e) => setToDate(e.target.value)}
@@ -256,6 +266,7 @@ export default function Ledger() {
               title="To Pledge Date"
             />
           </div>
+
 
           {/* Reset Filters */}
           {(searchTerm || statusFilter !== 'ALL' || metalFilter !== 'ALL' || fromDate || toDate) && (
