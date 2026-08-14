@@ -1,28 +1,243 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../api/client';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Eye, Loader2, Calendar, Trash2, Edit, Unlock, NotebookTabs, X, Search } from 'lucide-react';
+import { Plus, Eye, Loader2, Calendar, Trash2, Edit, Unlock, NotebookTabs, X, Search, IndianRupee, Percent, TrendingUp, AlertCircle } from 'lucide-react';
 import LedgerModal from '../components/LedgerModal';
 
+/* ─── Interest Calculation Helpers ─────────────────────────── */
+
+/**
+ * Returns the number of elapsed "billing months" using ceiling logic:
+ * - 0 days elapsed → 0 months (but we treat as 1 if any partial month)
+ * - 1 day – 31 days → 1 month
+ * - pledge_date to same date next month → 1 month
+ * - One day past that → 2 months, etc.
+ *
+ * Rule: ceil the number of months. Even 1 day into a new month = full month charged.
+ */
+function calcMonthsCeiling(pledgeDate) {
+  const start = new Date(pledgeDate);
+  const now = new Date();
+
+  // Difference in total months (integer part)
+  let months =
+    (now.getFullYear() - start.getFullYear()) * 12 +
+    (now.getMonth() - start.getMonth());
+
+  // Check if same-date-next-month anniversary has passed
+  const anniversary = new Date(start);
+  anniversary.setMonth(anniversary.getMonth() + months);
+
+  if (now < anniversary) {
+    // Haven't yet reached the anniversary → still in that previous month
+    months = Math.max(months, 0);
+  } else if (now > anniversary) {
+    // Past the anniversary → one more partial month started → ceil
+    months = months + 1;
+  }
+  // now === anniversary → exactly on the date, no extra month
+
+  return Math.max(months, 1); // always charge at least 1 month
+}
+
+/**
+ * Detect the dominant metal from article names.
+ * Returns 'silver' if any article name contains 'silver', else 'gold'.
+ */
+function detectMetal(articles = []) {
+  const names = articles.map(a => (a.name || '').toLowerCase()).join(' ');
+  return names.includes('silver') ? 'silver' : 'gold';
+}
+
+/* ─── Release Modal ─────────────────────────────────────────── */
+function ReleaseModal({ girvi, onClose, onConfirm, loading }) {
+  const metal = detectMetal(girvi.articles);
+  const defaultRate = metal === 'silver' ? 10 : 3;
+
+  const [ratePercent, setRatePercent] = useState(defaultRate);
+  const [metalType, setMetalType] = useState(metal);
+
+  const months = calcMonthsCeiling(girvi.pledge_date);
+  const principal = Number(girvi.loan_amount) || 0;
+  const rate = Number(ratePercent) || 0;
+  const interest = +(principal * (rate / 100) * months).toFixed(2);
+  const total = +(principal + interest).toFixed(2);
+
+  const pledgeDateFmt = new Date(girvi.pledge_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  const todayFmt = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+
+  function handleMetalChange(m) {
+    setMetalType(m);
+    setRatePercent(m === 'silver' ? 10 : 3);
+  }
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0,
+      background: 'rgba(0,0,0,0.65)',
+      backdropFilter: 'blur(6px)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      zIndex: 1000,
+      animation: 'fadeIn 0.2s ease-out',
+    }}>
+      <div style={{
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border-strong)',
+        borderRadius: 'var(--radius-xl)',
+        width: '100%',
+        maxWidth: '440px',
+        boxShadow: '0 20px 60px rgba(0,0,0,0.6), 0 0 30px rgba(99,102,241,0.15)',
+        overflow: 'hidden',
+        animation: 'fadeInUp 0.25s cubic-bezier(0.16,1,0.3,1)',
+      }}>
+        {/* Header */}
+        <div style={{
+          background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+          padding: '1.1rem 1.5rem',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+            <Unlock size={18} color="#fff" />
+            <span style={{ fontWeight: 700, fontSize: '1rem', color: '#fff' }}>Release Girvi</span>
+          </div>
+          <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.15)', border: 'none', cursor: 'pointer', borderRadius: '6px', padding: '4px 6px', color: '#fff', display: 'flex' }}>
+            <X size={16} />
+          </button>
+        </div>
+
+        <div style={{ padding: '1.25rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+
+          {/* Customer Info */}
+          <div style={{ background: 'var(--bg-surface-2)', borderRadius: 'var(--radius-md)', padding: '0.75rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-primary)' }}>{girvi.customer_name}</div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>Pledge #{girvi.pledge_no}</div>
+            </div>
+            <div style={{ textAlign: 'right', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+              <div>{pledgeDateFmt} → {todayFmt}</div>
+              <div style={{ color: 'var(--brand-gold)', fontWeight: 600, marginTop: '2px' }}>{months} month{months !== 1 ? 's' : ''} elapsed</div>
+            </div>
+          </div>
+
+          {/* Metal Type Selector */}
+          <div>
+            <label style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '0.4rem' }}>
+              Metal Type
+            </label>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              {['gold', 'silver'].map(m => (
+                <button
+                  key={m}
+                  onClick={() => handleMetalChange(m)}
+                  style={{
+                    flex: 1, padding: '0.5rem 0', borderRadius: 'var(--radius-md)',
+                    border: `1.5px solid ${metalType === m ? (m === 'gold' ? '#f59e0b' : '#94a3b8') : 'var(--border)'}`,
+                    background: metalType === m
+                      ? (m === 'gold' ? 'rgba(245,158,11,0.12)' : 'rgba(148,163,184,0.12)')
+                      : 'var(--bg-surface-2)',
+                    color: metalType === m ? (m === 'gold' ? '#f59e0b' : '#94a3b8') : 'var(--text-secondary)',
+                    fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer',
+                    transition: 'all 0.15s',
+                    textTransform: 'capitalize',
+                  }}
+                >
+                  {m === 'gold' ? '🥇' : '🥈'} {m}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Interest Rate Input */}
+          <div>
+            <label style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '0.4rem' }}>
+              Interest Rate (% per month)
+            </label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--bg-surface-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '0.1rem 0.75rem' }}>
+              <Percent size={14} color="var(--text-muted)" />
+              <input
+                type="number"
+                min="0"
+                step="0.1"
+                value={ratePercent}
+                onChange={e => setRatePercent(e.target.value)}
+                style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: 'var(--text-primary)', fontFamily: 'var(--font-sans)', fontSize: '0.95rem', fontWeight: 600, padding: '0.55rem 0' }}
+              />
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>per month</span>
+            </div>
+          </div>
+
+          {/* Breakdown */}
+          <div style={{ background: 'var(--bg-surface-2)', borderRadius: 'var(--radius-md)', overflow: 'hidden', border: '1px solid var(--border)' }}>
+            {[
+              { label: 'Principal (Loan)', value: `₹${principal.toLocaleString('en-IN')}`, color: 'var(--text-primary)', bold: false },
+              { label: `Interest (${rate}% × ${months} mo)`, value: `₹${interest.toLocaleString('en-IN')}`, color: '#f59e0b', bold: false },
+            ].map(({ label, value, color }, i) => (
+              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 1rem', borderBottom: '1px solid var(--border)' }}>
+                <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>{label}</span>
+                <span style={{ fontSize: '0.9rem', fontWeight: 600, color }}>{value}</span>
+              </div>
+            ))}
+            {/* Total */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', background: 'linear-gradient(135deg, rgba(99,102,241,0.12), rgba(139,92,246,0.08))' }}>
+              <span style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <IndianRupee size={14} color="var(--brand-primary)" /> Total to Collect
+              </span>
+              <span style={{ fontSize: '1.2rem', fontWeight: 800, background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                ₹{total.toLocaleString('en-IN')}
+              </span>
+            </div>
+          </div>
+
+          {/* Info note */}
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start', background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 'var(--radius-md)', padding: '0.6rem 0.875rem' }}>
+            <AlertCircle size={14} color="#f59e0b" style={{ flexShrink: 0, marginTop: '2px' }} />
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+              Interest is charged per full/partial month. Even 1 day into a new month counts as a full extra month.
+            </span>
+          </div>
+
+          {/* Actions */}
+          <div style={{ display: 'flex', gap: '0.75rem' }}>
+            <button className="btn btn-secondary" onClick={onClose} style={{ flex: 1 }} disabled={loading}>
+              Cancel
+            </button>
+            <button
+              className="btn btn-primary"
+              onClick={() => onConfirm({ rate, months, interest, total })}
+              style={{ flex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+              disabled={loading}
+            >
+              {loading ? <Loader2 size={16} className="spin" /> : <Unlock size={16} />}
+              {loading ? 'Releasing…' : `Confirm Release — ₹${total.toLocaleString('en-IN')}`}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Ledger Page ────────────────────────────────────────────── */
 export default function Ledger() {
   const [girvis, setGirvis] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
-  // New Ledger state
+
   const [showLedgerModal, setShowLedgerModal] = useState(false);
   const [activeGirvi, setActiveGirvi] = useState(null);
-  
+
+  // Release modal state
+  const [releaseGirvi, setReleaseGirvi] = useState(null);
+  const [releaseLoading, setReleaseLoading] = useState(false);
+
   const [actionLoading, setActionLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchGirvis();
-  }, []);
+  useEffect(() => { fetchGirvis(); }, []);
 
   const getStatusColor = (status) => {
-    switch(status) {
+    switch (status) {
       case 'Active': return '#10b981';
       case 'Released': return '#8b5cf6';
       default: return 'var(--text-muted)';
@@ -65,25 +280,24 @@ export default function Ledger() {
     }
   };
 
-  const handleRelease = async (id) => {
-    if (!window.confirm('Are you sure you want to mark this Girvi as Released?')) return;
+  const handleReleaseConfirm = async ({ rate, months, interest, total }) => {
+    if (!releaseGirvi) return;
     try {
-      setActionLoading(true);
-      await api.releaseGirvi(id);
+      setReleaseLoading(true);
+      await api.releaseGirvi(releaseGirvi.id);
+      setReleaseGirvi(null);
       fetchGirvis();
     } catch (err) {
       setError(err.message || 'Failed to release Girvi');
     } finally {
-      setActionLoading(false);
+      setReleaseLoading(false);
     }
   };
 
   const formatDate = (dateString) => {
     if (!dateString) return '-';
     return new Date(dateString).toLocaleDateString('en-IN', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric'
+      day: '2-digit', month: 'short', year: 'numeric'
     });
   };
 
@@ -104,9 +318,9 @@ export default function Ledger() {
             <div style={{ position: 'absolute', top: '50%', left: '12px', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}>
               <Search size={18} />
             </div>
-            <input 
-              type="text" 
-              placeholder="Search by name, number, date..." 
+            <input
+              type="text"
+              placeholder="Search by name, number, date..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="input-field"
@@ -143,7 +357,7 @@ export default function Ledger() {
               {filteredGirvis.length === 0 ? (
                 <tr>
                   <td colSpan="7" style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-                    {searchTerm ? "No records match your search." : "No records found. Click \"New Girvi\" to create one."}
+                    {searchTerm ? 'No records match your search.' : 'No records found. Click "New Girvi" to create one.'}
                   </td>
                 </tr>
               ) : (
@@ -173,18 +387,18 @@ export default function Ledger() {
                     </td>
                     <td style={{ padding: '1rem', textAlign: 'center' }}>
                       <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
-                        <button 
-                          className="btn btn-secondary" 
-                          style={{ padding: '0.5rem', color: 'var(--primary-color)' }} 
+                        <button
+                          className="btn btn-secondary"
+                          style={{ padding: '0.5rem', color: 'var(--primary-color)' }}
                           title="Print/View"
                           onClick={() => navigate(`/girvi/${girvi.id}/print`)}
                           disabled={actionLoading}
                         >
                           <Eye size={18} />
                         </button>
-                        <button 
-                          className="btn btn-secondary" 
-                          style={{ padding: '0.5rem', color: '#f59e0b' }} 
+                        <button
+                          className="btn btn-secondary"
+                          style={{ padding: '0.5rem', color: '#f59e0b' }}
                           title="Edit"
                           onClick={() => navigate(`/girvi/edit/${girvi.id}`)}
                           disabled={actionLoading}
@@ -193,29 +407,29 @@ export default function Ledger() {
                         </button>
                         {girvi.status === 'Active' && (
                           <>
-                            <button 
-                              className="btn btn-secondary" 
-                              style={{ padding: '0.5rem', color: '#10b981' }} 
+                            <button
+                              className="btn btn-secondary"
+                              style={{ padding: '0.5rem', color: '#10b981' }}
                               title="Ledger (Transactions)"
                               onClick={() => { setActiveGirvi(girvi); setShowLedgerModal(true); }}
                               disabled={actionLoading}
                             >
                               <NotebookTabs size={18} />
                             </button>
-                            <button 
-                              className="btn btn-secondary" 
-                              style={{ padding: '0.5rem', color: '#8b5cf6' }} 
+                            <button
+                              className="btn btn-secondary"
+                              style={{ padding: '0.5rem', color: '#8b5cf6' }}
                               title="Release"
-                              onClick={() => handleRelease(girvi.id)}
+                              onClick={() => setReleaseGirvi(girvi)}
                               disabled={actionLoading}
                             >
                               <Unlock size={18} />
                             </button>
                           </>
                         )}
-                        <button 
-                          className="btn btn-secondary" 
-                          style={{ padding: '0.5rem', color: '#ef4444' }} 
+                        <button
+                          className="btn btn-secondary"
+                          style={{ padding: '0.5rem', color: '#ef4444' }}
                           title="Delete"
                           onClick={() => handleDelete(girvi.id)}
                           disabled={actionLoading}
@@ -232,14 +446,32 @@ export default function Ledger() {
         </div>
       </div>
 
-      {/* Ledger Modal */}
+      {/* Ledger Transactions Modal */}
       {showLedgerModal && activeGirvi && (
-        <LedgerModal 
-          girvi={activeGirvi} 
+        <LedgerModal
+          girvi={activeGirvi}
           onClose={() => setShowLedgerModal(false)}
           onUpdate={fetchGirvis}
         />
       )}
+
+      {/* Release Modal */}
+      {releaseGirvi && (
+        <ReleaseModal
+          girvi={releaseGirvi}
+          loading={releaseLoading}
+          onClose={() => setReleaseGirvi(null)}
+          onConfirm={handleReleaseConfirm}
+        />
+      )}
+
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .spin { animation: spin 0.8s linear infinite; }
+        @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+        @keyframes fadeInUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+      `}</style>
     </div>
   );
 }
+
