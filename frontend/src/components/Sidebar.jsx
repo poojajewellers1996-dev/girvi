@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { Diamond, LayoutDashboard, PlusCircle, FolderOpen, BookOpen, Repeat, ScrollText, Settings, X } from 'lucide-react';
+import { Diamond, LayoutDashboard, PlusCircle, FolderOpen, BookOpen, Repeat, ScrollText, Settings, X, Calculator } from 'lucide-react';
 
 export default function Sidebar({ isOpen, setIsOpen }) {
   const navItems = [
@@ -7,9 +7,11 @@ export default function Sidebar({ isOpen, setIsOpen }) {
     { name: 'New Girvi', path: '/girvi/new', icon: PlusCircle },
     { name: 'Girvi Ledger', path: '/ledger', icon: BookOpen },
     { name: 'Re-Pledge Girvi', path: '/re-pledge', icon: Repeat },
+    { name: 'Calculator', path: '/calculator', icon: Calculator },
     { name: 'System Logs', path: '/logs', icon: ScrollText },
     { name: 'Settings', path: '/settings', icon: Settings },
   ];
+
 
   return (
     <aside className={`sidebar ${isOpen ? 'open' : ''}`}>

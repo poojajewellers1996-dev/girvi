@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, LogOut, UserCircle, Menu } from 'lucide-react';
+import { Search, LogOut, UserCircle, Menu, Calculator } from 'lucide-react';
 
 export default function TopNav({ toggleSidebar }) {
   const navigate = useNavigate();
@@ -32,7 +32,17 @@ export default function TopNav({ toggleSidebar }) {
         </div>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+        {/* Quick Calculator Shortcut */}
+        <button
+          onClick={() => navigate('/calculator')}
+          className="btn btn-secondary"
+          style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--brand-primary)' }}
+          title="Open Interest Calculator"
+        >
+          <Calculator size={16} /> Calculator
+        </button>
+
         <div className="hide-on-mobile" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
           <span style={{ fontWeight: '600', fontSize: '0.875rem', color: 'var(--text-main)' }}>
             {time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
@@ -41,6 +51,7 @@ export default function TopNav({ toggleSidebar }) {
             {time.toLocaleDateString([], { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}
           </span>
         </div>
+
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', borderLeft: '1px solid var(--border)', paddingLeft: '2rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-main)' }}>
