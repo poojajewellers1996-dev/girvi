@@ -6,6 +6,8 @@ import LedgerModal from '../components/LedgerModal';
 import ReleaseModal from '../components/ReleaseModal';
 import ImageLightbox from '../components/ImageLightbox';
 import { exportGirviLedger } from '../utils/exportUtils';
+import { formatDate } from '../utils/dateUtils';
+
 
 export default function Ledger() {
   const [girvis, setGirvis] = useState([]);
@@ -134,12 +136,7 @@ export default function Ledger() {
     }
   };
 
-  const formatDate = (dateString) => {
-    if (!dateString) return '-';
-    return new Date(dateString).toLocaleDateString('en-IN', {
-      day: '2-digit', month: 'short', year: 'numeric'
-    });
-  };
+
 
   if (loading) {
     return (

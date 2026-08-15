@@ -3,6 +3,8 @@ import { api } from '../api/client';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Plus, Trash2, Save, ArrowLeft, Camera, Image as ImageIcon } from 'lucide-react';
 import CameraCapture from '../components/CameraCapture';
+import { toInputDateString, toISOAtNoon } from '../utils/dateUtils';
+
 
 export default function NewGirvi() {
   const { id } = useParams();
@@ -90,8 +92,8 @@ export default function NewGirvi() {
         .then(data => {
           setGirviData({
             pledge_no: data.pledge_no,
-            pledge_date: data.pledge_date.split('T')[0],
-            due_date: data.due_date.split('T')[0],
+            pledge_date: toInputDateString(data.pledge_date),
+            due_date: toInputDateString(data.due_date),
             customer_name: data.customer_name,
             relation_type: data.relation_type || '',
             relation_name: data.relation_name || '',
@@ -115,11 +117,12 @@ export default function NewGirvi() {
               loan_number: r.loan_number,
               repledger_name: r.repledger_name,
               bank_name: r.bank_name,
-              date_of_loan: r.date_of_loan.split('T')[0],
+              date_of_loan: toInputDateString(r.date_of_loan),
               amount: r.amount
             })));
           }
         })
+
         .catch(err => setError(err.message || "Failed to load Girvi"))
         .finally(() => setLoading(false));
     }
@@ -290,8 +293,8 @@ export default function NewGirvi() {
 
       const payload = {
         ...girviData,
-        pledge_date: new Date(girviData.pledge_date).toISOString(),
-        due_date: new Date(girviData.due_date).toISOString(),
+        pledge_date: toISOAtNoon(girviData.pledge_date),
+        due_date: toISOAtNoon(girviData.due_date),
         present_value: totalPresentValue,
         loan_amount: totalLoanAmount,
         mobile_number: girviData.mobile_number ? (girviData.mobile_number.startsWith('+') ? girviData.mobile_number : `+91${girviData.mobile_number}`) : null,
@@ -311,10 +314,11 @@ export default function NewGirvi() {
           loan_number: r.loan_number,
           repledger_name: r.repledger_name,
           bank_name: r.bank_name,
-          date_of_loan: new Date(r.date_of_loan || Date.now()).toISOString(),
+          date_of_loan: toISOAtNoon(r.date_of_loan || new Date().toISOString().split('T')[0]),
           amount: Number(r.amount) || 0
         }));
       }
+
 
       if (id) {
         const savedGirvi = await api.updateGirvi(id, payload);

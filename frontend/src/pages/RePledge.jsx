@@ -3,6 +3,7 @@ import { api } from '../api/client';
 import { Loader2, ChevronDown, ChevronUp, ExternalLink, Calendar, Landmark, Search, Plus, Trash2, IndianRupee, Unlock, CheckCircle, Clock, Download, Edit, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { exportBankRePledges, exportInterestReport } from '../utils/exportUtils';
+import { formatDate, toInputDateString, toISOAtNoon } from '../utils/dateUtils';
 
 export default function RePledge() {
   const [repledges, setRepledges] = useState([]);
@@ -54,15 +55,6 @@ export default function RePledge() {
     setExpandedRows(newExpanded);
   };
 
-  const formatDate = (dateString) => {
-    if (!dateString) return '-';
-    return new Date(dateString).toLocaleDateString('en-IN', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric'
-    });
-  };
-
   // Open Edit Modal with selected repledge data
   const handleOpenEditModal = (e, repledge) => {
     e.stopPropagation();
@@ -71,7 +63,7 @@ export default function RePledge() {
       bank_name: repledge.bank_name || '',
       loan_number: repledge.loan_number || '',
       repledger_name: repledge.repledger_name || '',
-      date_of_loan: repledge.date_of_loan ? new Date(repledge.date_of_loan).toISOString().split('T')[0] : '',
+      date_of_loan: toInputDateString(repledge.date_of_loan),
       amount: repledge.amount || '',
       status: repledge.status || 'Active'
     });
@@ -87,7 +79,7 @@ export default function RePledge() {
         bank_name: editForm.bank_name,
         loan_number: editForm.loan_number,
         repledger_name: editForm.repledger_name,
-        date_of_loan: editForm.date_of_loan ? new Date(editForm.date_of_loan).toISOString() : null,
+        date_of_loan: toISOAtNoon(editForm.date_of_loan),
         amount: parseFloat(editForm.amount),
         status: editForm.status
       });
@@ -100,6 +92,7 @@ export default function RePledge() {
       setActionLoading(false);
     }
   };
+
 
   const handleInterestInputChange = (repledgeId, field, value) => {
     setInterestInputs(prev => ({
@@ -128,9 +121,10 @@ export default function RePledge() {
       setActionLoading(true);
       await api.addRepledgeTransaction(repledgeId, {
         amount: parseFloat(input.amount),
-        payment_date: input.payment_date ? new Date(input.payment_date).toISOString() : new Date().toISOString(),
+        payment_date: toISOAtNoon(input.payment_date || new Date().toISOString().split('T')[0]),
         remarks: input.remarks || null
       });
+
 
       // Clear input
       setInterestInputs(prev => ({

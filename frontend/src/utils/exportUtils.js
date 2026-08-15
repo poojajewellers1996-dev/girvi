@@ -1,3 +1,5 @@
+import { formatDate } from './dateUtils';
+
 /**
  * Utility functions for exporting data to CSV / Excel formatted files.
  * Includes UTF-8 BOM (\uFEFF) for seamless opening in Microsoft Excel.
@@ -52,8 +54,8 @@ export function exportGirviLedger(girvis) {
       g.relation_type || '',
       g.relation_name || '',
       g.mobile_number ? g.mobile_number.replace('+91', '') : '',
-      g.pledge_date ? new Date(g.pledge_date).toLocaleDateString('en-IN') : '',
-      g.due_date ? new Date(g.due_date).toLocaleDateString('en-IN') : '',
+      formatDate(g.pledge_date),
+      formatDate(g.due_date),
       items,
       netWt,
       grossWt,
@@ -87,14 +89,14 @@ export function exportBankRePledges(repledges) {
   const rows = repledges.map(r => {
     const totalPaid = r.transactions?.reduce((sum, t) => sum + (Number(t.amount) || 0), 0) || 0;
     const txLog = r.transactions?.map(t => 
-      `${new Date(t.payment_date).toLocaleDateString('en-IN')}: ₹${t.amount}${t.remarks ? ' (' + t.remarks + ')' : ''}`
+      `${formatDate(t.payment_date)}: ₹${t.amount}${t.remarks ? ' (' + t.remarks + ')' : ''}`
     ).join(' | ') || 'No payments recorded';
 
     return [
       r.bank_name,
       r.loan_number,
       r.repledger_name,
-      r.date_of_loan ? new Date(r.date_of_loan).toLocaleDateString('en-IN') : '',
+      formatDate(r.date_of_loan),
       r.amount || 0,
       totalPaid,
       r.status || 'Active',
@@ -129,7 +131,7 @@ export function exportInterestReport(repledges) {
           r.bank_name,
           r.loan_number,
           r.repledger_name,
-          new Date(t.payment_date).toLocaleDateString('en-IN'),
+          formatDate(t.payment_date),
           t.amount || 0,
           t.remarks || '-'
         ].map(escapeCSV).join(','));
@@ -141,3 +143,4 @@ export function exportInterestReport(repledges) {
   const filename = `Interest_Collection_Report_${new Date().toISOString().split('T')[0]}.csv`;
   downloadCSV(filename, csvContent);
 }
+
