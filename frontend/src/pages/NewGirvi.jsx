@@ -81,9 +81,17 @@ export default function NewGirvi() {
       if (name === 'loan_amount') {
         updated.loan_amount_words = numberToWords(val);
       }
+      if (name === 'pledge_date' && val) {
+        const parts = val.split('-');
+        if (parts.length === 3) {
+          const nextYear = parseInt(parts[0], 10) + 1;
+          updated.due_date = `${nextYear}-${parts[1]}-${parts[2]}`;
+        }
+      }
       return updated;
     });
   };
+
 
   useEffect(() => {
     if (id) {
