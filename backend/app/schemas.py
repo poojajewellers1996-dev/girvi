@@ -127,6 +127,15 @@ class RepledgeCreate(BaseModel):
     amount: float
     status: Optional[str] = "Active"
 
+class RepledgeUpdate(BaseModel):
+    loan_number: Optional[str] = None
+    repledger_name: Optional[str] = None
+    bank_name: Optional[str] = None
+    date_of_loan: Optional[datetime] = None
+    amount: Optional[float] = None
+    status: Optional[str] = None
+
+
 
 class RepledgeTransactionCreate(BaseModel):
     amount: float = Field(..., gt=0)

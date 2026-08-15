@@ -124,6 +124,11 @@ export const api = {
   releaseRepledge: (id) => request(`/repledge/${id}/release`, {
     method: 'PATCH'
   }),
+  updateRepledge: (id, data) => request(`/repledge/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data)
+  }),
+
 
 
   

@@ -311,6 +311,21 @@ def release_repledge(
     log_system_action(db, "REPLEDGE_RELEASE", f"Released bank loan #{released.loan_number}", module="REPLEDGE")
     return schemas.RepledgeRead.model_validate(released)
 
+@app.put("/repledge/{repledge_id}", response_model=schemas.RepledgeRead)
+@app.put("/repledge/{repledge_id}/", response_model=schemas.RepledgeRead)
+def update_repledge(
+    repledge_id: int,
+    data: schemas.RepledgeUpdate,
+    db: Session = Depends(get_db),
+    token: dict = Depends(get_current_user),
+):
+    updated = crud.update_repledge(db, repledge_id, data)
+    if not updated:
+        raise HTTPException(status_code=404, detail="Bank repledge not found")
+    log_system_action(db, "REPLEDGE_UPDATE", f"Updated bank loan #{updated.loan_number}", module="REPLEDGE")
+    return schemas.RepledgeRead.model_validate(updated)
+
+
 
 
 

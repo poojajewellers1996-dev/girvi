@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../api/client';
-import { Loader2, ChevronDown, ChevronUp, ExternalLink, Calendar, Landmark, Search, Plus, Trash2, IndianRupee, Unlock, CheckCircle, Clock, Download } from 'lucide-react';
+import { Loader2, ChevronDown, ChevronUp, ExternalLink, Calendar, Landmark, Search, Plus, Trash2, IndianRupee, Unlock, CheckCircle, Clock, Download, Edit, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { exportBankRePledges, exportInterestReport } from '../utils/exportUtils';
-
 
 export default function RePledge() {
   const [repledges, setRepledges] = useState([]);
@@ -12,6 +11,17 @@ export default function RePledge() {
   const [expandedRows, setExpandedRows] = useState(new Set());
   const [searchTerm, setSearchTerm] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
+
+  // Edit Modal State
+  const [editModalData, setEditModalData] = useState(null);
+  const [editForm, setEditForm] = useState({
+    bank_name: '',
+    loan_number: '',
+    repledger_name: '',
+    date_of_loan: '',
+    amount: '',
+    status: 'Active'
+  });
 
   // Interest Form state per expanded repledge
   const [interestInputs, setInterestInputs] = useState({});
@@ -51,6 +61,44 @@ export default function RePledge() {
       month: 'short',
       year: 'numeric'
     });
+  };
+
+  // Open Edit Modal with selected repledge data
+  const handleOpenEditModal = (e, repledge) => {
+    e.stopPropagation();
+    setEditModalData(repledge);
+    setEditForm({
+      bank_name: repledge.bank_name || '',
+      loan_number: repledge.loan_number || '',
+      repledger_name: repledge.repledger_name || '',
+      date_of_loan: repledge.date_of_loan ? new Date(repledge.date_of_loan).toISOString().split('T')[0] : '',
+      amount: repledge.amount || '',
+      status: repledge.status || 'Active'
+    });
+  };
+
+  const handleEditFormSubmit = async (e) => {
+    e.preventDefault();
+    if (!editModalData) return;
+
+    try {
+      setActionLoading(true);
+      await api.updateRepledge(editModalData.id, {
+        bank_name: editForm.bank_name,
+        loan_number: editForm.loan_number,
+        repledger_name: editForm.repledger_name,
+        date_of_loan: editForm.date_of_loan ? new Date(editForm.date_of_loan).toISOString() : null,
+        amount: parseFloat(editForm.amount),
+        status: editForm.status
+      });
+
+      setEditModalData(null);
+      await fetchRepledges();
+    } catch (err) {
+      alert(err.message || 'Failed to update Bank Loan');
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   const handleInterestInputChange = (repledgeId, field, value) => {
@@ -162,6 +210,150 @@ export default function RePledge() {
 
   return (
     <div className="animate-fade-in">
+      
+      {/* Edit Bank Loan Modal */}
+      {editModalData && (
+        <div style={{
+          position: 'fixed', inset: 0,
+          background: 'rgba(15, 23, 42, 0.65)',
+          backdropFilter: 'blur(6px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 1000, padding: '1rem',
+          animation: 'fadeIn 0.2s ease-out'
+        }}>
+          <div className="card" style={{
+            width: '100%', maxWidth: '480px',
+            padding: '1.5rem', borderRadius: '16px',
+            background: 'var(--bg-surface)',
+            boxShadow: 'var(--shadow-lg)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.75rem' }}>
+              <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <Edit size={20} color="var(--brand-primary)" /> Edit Bank Loan #{editModalData.loan_number}
+              </h3>
+              <button onClick={() => setEditModalData(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleEditFormSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              
+              {/* Bank Name */}
+              <div className="input-group" style={{ margin: 0 }}>
+                <label htmlFor="edit_bank_name" className="input-label">Bank Name</label>
+                <input
+                  id="edit_bank_name"
+                  name="edit_bank_name"
+                  type="text"
+                  value={editForm.bank_name}
+                  onChange={(e) => setEditForm({ ...editForm, bank_name: e.target.value })}
+                  className="input-field"
+                  placeholder="e.g. KS / BOB / SBI / MM"
+                  required
+                />
+              </div>
+
+              {/* Loan Number */}
+              <div className="input-group" style={{ margin: 0 }}>
+                <label htmlFor="edit_loan_number" className="input-label">Bank Loan Number</label>
+                <input
+                  id="edit_loan_number"
+                  name="edit_loan_number"
+                  type="text"
+                  value={editForm.loan_number}
+                  onChange={(e) => setEditForm({ ...editForm, loan_number: e.target.value })}
+                  className="input-field"
+                  required
+                />
+              </div>
+
+              {/* Repledger Name */}
+              <div className="input-group" style={{ margin: 0 }}>
+                <label htmlFor="edit_repledger_name" className="input-label">Repledger Name</label>
+                <input
+                  id="edit_repledger_name"
+                  name="edit_repledger_name"
+                  type="text"
+                  value={editForm.repledger_name}
+                  onChange={(e) => setEditForm({ ...editForm, repledger_name: e.target.value })}
+                  className="input-field"
+                  required
+                />
+              </div>
+
+              {/* Date of Loan */}
+              <div className="input-group" style={{ margin: 0 }}>
+                <label htmlFor="edit_date_of_loan" className="input-label">Date of Bank Loan</label>
+                <input
+                  id="edit_date_of_loan"
+                  name="edit_date_of_loan"
+                  type="date"
+                  value={editForm.date_of_loan}
+                  onChange={(e) => setEditForm({ ...editForm, date_of_loan: e.target.value })}
+                  className="input-field"
+                  required
+                />
+              </div>
+
+              {/* Repledge Amount */}
+              <div className="input-group" style={{ margin: 0 }}>
+                <label htmlFor="edit_amount" className="input-label">Repledge Loan Amount (₹)</label>
+                <input
+                  id="edit_amount"
+                  name="edit_amount"
+                  type="number"
+                  step="0.01"
+                  value={editForm.amount}
+                  onChange={(e) => setEditForm({ ...editForm, amount: e.target.value })}
+                  className="input-field"
+                  style={{ fontWeight: 700, fontSize: '1rem', color: '#10b981' }}
+                  required
+                />
+              </div>
+
+              {/* Status */}
+              <div className="input-group" style={{ margin: 0 }}>
+                <label htmlFor="edit_status" className="input-label">Status</label>
+                <select
+                  id="edit_status"
+                  name="edit_status"
+                  value={editForm.status}
+                  onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
+                  className="input-field"
+                  required
+                >
+                  <option value="Active">🟢 Active</option>
+                  <option value="Released">🟣 Released</option>
+                </select>
+              </div>
+
+              {/* Actions */}
+              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setEditModalData(null)}
+                  style={{ flex: 1 }}
+                  disabled={actionLoading}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  style={{ flex: 1, background: 'var(--gradient-brand)' }}
+                  disabled={actionLoading}
+                >
+                  {actionLoading ? <Loader2 className="spin" size={18} /> : 'Save Changes'}
+                </button>
+              </div>
+
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Header Bar */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h2 style={{ fontSize: '1.5rem', fontWeight: '700', margin: 0 }}>Bank Re-Pledge Dashboard</h2>
@@ -191,6 +383,8 @@ export default function RePledge() {
               <Search size={16} />
             </div>
             <input 
+              id="bank_search"
+              name="bank_search"
               type="text" 
               placeholder="Search by loan no, bank, name..." 
               value={searchTerm}
@@ -202,7 +396,7 @@ export default function RePledge() {
         </div>
       </div>
 
-
+      {/* Summary Stat Cards */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))',
@@ -270,13 +464,13 @@ export default function RePledge() {
         </div>
       </div>
 
-
       {error && (
         <div style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', color: 'rgb(239, 68, 68)', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem' }}>
           {error}
         </div>
       )}
 
+      {/* Main Bank Loans Table */}
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
@@ -290,7 +484,7 @@ export default function RePledge() {
                 <th style={{ padding: '1rem', fontWeight: '600', textAlign: 'right' }}>Loan Amount</th>
                 <th style={{ padding: '1rem', fontWeight: '600', textAlign: 'right' }}>Total Interest Paid</th>
                 <th style={{ padding: '1rem', fontWeight: '600', textAlign: 'center' }}>Status</th>
-                <th style={{ padding: '1rem', fontWeight: '600', textAlign: 'center' }}>Action</th>
+                <th style={{ padding: '1rem', fontWeight: '600', textAlign: 'center' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -351,19 +545,29 @@ export default function RePledge() {
                           </span>
                         </td>
                         <td style={{ padding: '1rem', textAlign: 'center' }}>
-                          {repledge.status !== 'Released' ? (
+                          <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'center' }} onClick={(e) => e.stopPropagation()}>
                             <button 
                               className="btn btn-secondary" 
-                              style={{ padding: '0.35rem 0.6rem', fontSize: '0.78rem', color: '#8b5cf6', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
-                              onClick={(e) => handleReleaseRepledge(e, repledge.id, repledge.loan_number)}
+                              style={{ padding: '0.35rem 0.6rem', fontSize: '0.78rem', color: '#f59e0b', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
+                              onClick={(e) => handleOpenEditModal(e, repledge)}
                               disabled={actionLoading}
-                              title="Release / Close Bank Loan"
+                              title="Edit Bank Loan details"
                             >
-                              <Unlock size={14} /> Release
+                              <Edit size={14} /> Edit
                             </button>
-                          ) : (
-                            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Released</span>
-                          )}
+
+                            {repledge.status !== 'Released' && (
+                              <button 
+                                className="btn btn-secondary" 
+                                style={{ padding: '0.35rem 0.6rem', fontSize: '0.78rem', color: '#8b5cf6', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
+                                onClick={(e) => handleReleaseRepledge(e, repledge.id, repledge.loan_number)}
+                                disabled={actionLoading}
+                                title="Release / Close Bank Loan"
+                              >
+                                <Unlock size={14} /> Release
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                       
@@ -390,6 +594,8 @@ export default function RePledge() {
                                   <form onSubmit={(e) => handleAddInterest(e, repledge.id)} style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
                                     <div style={{ flex: '1 1 120px' }}>
                                       <input 
+                                        id={`interest_amt_${repledge.id}`}
+                                        name={`interest_amt_${repledge.id}`}
                                         type="number"
                                         step="0.01"
                                         placeholder="Interest Amt (₹)"
@@ -403,6 +609,8 @@ export default function RePledge() {
                                     </div>
                                     <div style={{ flex: '1 1 140px' }}>
                                       <input 
+                                        id={`payment_date_${repledge.id}`}
+                                        name={`payment_date_${repledge.id}`}
                                         type="date"
                                         value={inputState.payment_date}
                                         onChange={(e) => handleInterestInputChange(repledge.id, 'payment_date', e.target.value)}
@@ -414,6 +622,8 @@ export default function RePledge() {
                                     </div>
                                     <div style={{ flex: '2 1 180px' }}>
                                       <input 
+                                        id={`remarks_${repledge.id}`}
+                                        name={`remarks_${repledge.id}`}
                                         type="text"
                                         placeholder="Remarks e.g. Aug Month Interest"
                                         value={inputState.remarks}

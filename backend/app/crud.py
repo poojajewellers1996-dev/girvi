@@ -218,6 +218,21 @@ def update_repledge_status(db: Session, repledge_id: int, status: str):
         db.refresh(rep)
     return rep
 
+def update_repledge(db: Session, repledge_id: int, data: schemas.RepledgeUpdate):
+    rep = db.query(Repledge).filter(Repledge.id == repledge_id).first()
+    if not rep:
+        return None
+    
+    update_dict = data.model_dump(exclude_unset=True)
+    for key, val in update_dict.items():
+        if val is not None:
+            setattr(rep, key, val)
+            
+    db.commit()
+    db.refresh(rep)
+    return rep
+
+
 
 
 def delete_girvi(db: Session, girvi_id: int):
