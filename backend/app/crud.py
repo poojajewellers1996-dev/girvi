@@ -18,15 +18,16 @@ def get_girvi(db: Session, girvi_id: int) -> Optional[Girvi]:
         .first()
     )
 
-def list_girvis(db: Session, skip: int = 0, limit: int = 100):
-    return (
+def list_girvis(db: Session, skip: int = 0, limit: Optional[int] = None):
+    query = (
         db.query(Girvi)
         .options(selectinload(Girvi.articles), selectinload(Girvi.repledges))
         .order_by(Girvi.id.desc())
         .offset(skip)
-        .limit(limit)
-        .all()
     )
+    if limit is not None:
+        query = query.limit(limit)
+    return query.all()
 
 from .models import User, OTP, Company, Girvi, Article, Repledge, RepledgeTransaction, SystemLog
 

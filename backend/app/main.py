@@ -258,7 +258,7 @@ def create_girvi(
 @app.get("/girvi", response_model=List[schemas.GirviRead])
 def list_girvis(
     skip: int = 0,
-    limit: int = 100,
+    limit: Optional[int] = None,
     db: Session = Depends(get_db),
     token: dict = Depends(get_current_user),
 ):
