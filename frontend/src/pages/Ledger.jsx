@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../api/client';
-import { Loader2, Search, Plus, Eye, Edit, Trash2, Calendar, NotebookTabs, Unlock, Download, Filter, RotateCcw, Image as ImageIcon, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { Loader2, Search, Plus, Eye, Edit, Trash2, Calendar, NotebookTabs, Unlock, Download, Filter, RotateCcw, Image as ImageIcon, ArrowUpDown, ArrowUp, ArrowDown, Landmark } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import LedgerModal from '../components/LedgerModal';
 import ReleaseModal from '../components/ReleaseModal';
 import ImageLightbox from '../components/ImageLightbox';
 import { exportGirviLedger } from '../utils/exportUtils';
 import { formatDate } from '../utils/dateUtils';
+
 
 
 export default function Ledger() {
@@ -350,6 +351,7 @@ export default function Ledger() {
                 <th style={{ padding: '1rem', fontWeight: '600' }}>Item Description</th>
                 <th style={{ padding: '1rem', fontWeight: '600' }}>Weight</th>
                 {renderSortHeader('Dates', 'pledge_date')}
+                {renderSortHeader('Bank', 'bank_name')}
                 {renderSortHeader('Total Value', 'present_value', 'right')}
                 {renderSortHeader('Loan Amount', 'loan_amount', 'right')}
                 <th style={{ padding: '1rem', fontWeight: '600', textAlign: 'center' }}>Status</th>
@@ -359,7 +361,7 @@ export default function Ledger() {
             <tbody>
               {sortedGirvis.length === 0 ? (
                 <tr>
-                  <td colSpan="10" style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                  <td colSpan="11" style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
                     {(searchTerm || statusFilter !== 'ALL' || metalFilter !== 'ALL' || fromDate || toDate) 
                       ? 'No records match your filters.' 
                       : 'No records found. Click "New Girvi" to create one.'}
@@ -447,8 +449,38 @@ export default function Ledger() {
                         <span style={{ color: 'rgb(239, 68, 68)' }}>Due:</span> {formatDate(girvi.due_date)}
                       </div>
                     </td>
+
+                    {/* Bank Re-Pledge Column */}
+                    <td style={{ padding: '1rem', whiteSpace: 'nowrap' }}>
+                      {girvi.repledges && girvi.repledges.length > 0 ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          {girvi.repledges.map(r => (
+                            <span 
+                              key={r.id} 
+                              style={{ 
+                                display: 'inline-flex', 
+                                alignItems: 'center', 
+                                gap: '0.25rem', 
+                                background: 'rgba(79, 70, 229, 0.12)', 
+                                color: 'var(--brand-primary)', 
+                                padding: '0.2rem 0.5rem', 
+                                borderRadius: '6px', 
+                                fontSize: '0.78rem', 
+                                fontWeight: 700 
+                              }}
+                              title={`Bank Loan #${r.loan_number} (${r.repledger_name})`}
+                            >
+                              <Landmark size={12} /> {r.bank_name}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <span style={{ color: 'var(--text-muted)' }}>-</span>
+                      )}
+                    </td>
                     
                     <td style={{ padding: '1rem', whiteSpace: 'nowrap' }}>₹{girvi.present_value?.toLocaleString('en-IN') || 0}</td>
+
                     <td style={{ padding: '1rem', fontWeight: '700', color: 'var(--primary-color)', whiteSpace: 'nowrap' }}>₹{girvi.loan_amount?.toLocaleString('en-IN') || 0}</td>
                     
                     <td style={{ padding: '1rem', textAlign: 'center' }}>

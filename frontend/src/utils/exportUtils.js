@@ -37,6 +37,7 @@ export function exportGirviLedger(girvis) {
     'Items Description',
     'Net Weight (g)',
     'Gross Weight (g)',
+    'Bank Re-Pledge',
     'Present Value (₹)',
     'Loan Amount (₹)',
     'Status'
@@ -47,6 +48,7 @@ export function exportGirviLedger(girvis) {
     const items = g.articles?.map(a => `${a.name} (${a.quantity})`).join('; ') || '-';
     const netWt = g.articles?.reduce((sum, a) => sum + (Number(a.net_wt) || 0), 0).toFixed(2) || '0.00';
     const grossWt = g.articles?.reduce((sum, a) => sum + (Number(a.gross_wt) || 0), 0).toFixed(2) || '0.00';
+    const banks = g.repledges?.map(r => `${r.bank_name} (#${r.loan_number})`).join('; ') || '-';
 
     return [
       g.pledge_no,
@@ -59,11 +61,13 @@ export function exportGirviLedger(girvis) {
       items,
       netWt,
       grossWt,
+      banks,
       g.present_value || 0,
       g.loan_amount || 0,
       g.status || 'Active'
     ].map(escapeCSV).join(',');
   });
+
 
   const csvContent = [headers.map(escapeCSV).join(','), ...rows].join('\n');
   const filename = `Girvi_Ledger_${new Date().toISOString().split('T')[0]}.csv`;
