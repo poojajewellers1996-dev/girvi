@@ -5,10 +5,48 @@ import hmac
 import time
 import datetime
 from typing import Optional
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session, joinedload, selectinload
 from . import models, schemas, config
 from .config import settings
 from .models import User, OTP, Company, Girvi, Article, Repledge, SystemLog
+
+def get_girvi(db: Session, girvi_id: int) -> Optional[Girvi]:
+    return (
+        db.query(Girvi)
+        .options(selectinload(Girvi.articles), selectinload(Girvi.repledges))
+        .filter(Girvi.id == girvi_id)
+        .first()
+    )
+
+def list_girvis(db: Session, skip: int = 0, limit: int = 100):
+    return (
+        db.query(Girvi)
+        .options(selectinload(Girvi.articles), selectinload(Girvi.repledges))
+        .order_by(Girvi.id.desc())
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
+
+from .models import User, OTP, Company, Girvi, Article, Repledge, RepledgeTransaction, SystemLog
+
+def list_repledges(db: Session):
+    try:
+        return (
+            db.query(Repledge)
+            .options(selectinload(Repledge.girvis), selectinload(Repledge.transactions))
+            .order_by(Repledge.id.desc())
+            .all()
+        )
+    except Exception:
+        db.rollback()
+        return (
+            db.query(Repledge)
+            .options(selectinload(Repledge.girvis))
+            .order_by(Repledge.id.desc())
+            .all()
+        )
+
 from .schemas import (
     LoginRequest,
     TokenResponse,
@@ -175,20 +213,7 @@ def create_girvi(db: Session, girvi_data: GirviCreate, owner_user_id: int):
     db.refresh(girvi)
     return girvi
 
-def get_girvi(db: Session, girvi_id: int) -> Optional[Girvi]:
-    return db.query(Girvi).filter(Girvi.id == girvi_id).first()
 
-def list_girvis(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(Girvi).order_by(Girvi.id.desc()).offset(skip).limit(limit).all()
-
-from .models import User, OTP, Company, Girvi, Article, Repledge, RepledgeTransaction, SystemLog
-
-def list_repledges(db: Session):
-    try:
-        return db.query(Repledge).options(joinedload(Repledge.girvis), joinedload(Repledge.transactions)).order_by(Repledge.id.desc()).all()
-    except Exception:
-        db.rollback()
-        return db.query(Repledge).options(joinedload(Repledge.girvis)).order_by(Repledge.id.desc()).all()
 
 
 def create_repledge_transaction(db: Session, repledge_id: int, data: schemas.RepledgeTransactionCreate):
