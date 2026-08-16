@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../api/client';
-import { Loader2, ChevronDown, ChevronUp, ExternalLink, Calendar, Landmark, Search, Plus, Trash2, IndianRupee, Unlock, CheckCircle, Clock, Download, Edit, X } from 'lucide-react';
+import { Loader2, ChevronDown, ChevronUp, ExternalLink, Calendar, Landmark, Search, Plus, Trash2, IndianRupee, Unlock, CheckCircle, Clock, Download, Edit, X, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { exportBankRePledges, exportInterestReport } from '../utils/exportUtils';
 import { formatDate, toInputDateString, toISOAtNoon } from '../utils/dateUtils';
@@ -12,6 +12,40 @@ export default function RePledge() {
   const [expandedRows, setExpandedRows] = useState(new Set());
   const [searchTerm, setSearchTerm] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
+
+  // Sorting State
+  const [sortField, setSortField] = useState('loan_number'); // 'bank_name' | 'loan_number' | 'repledger_name' | 'date_of_loan' | 'amount' | 'total_interest_paid' | 'status'
+  const [sortOrder, setSortOrder] = useState('desc'); // 'asc' | 'desc'
+
+  const handleSort = (field) => {
+    if (sortField === field) {
+      setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('desc');
+    }
+  };
+
+  const renderSortHeader = (label, field, align = 'left') => {
+    const isCurrent = sortField === field;
+    return (
+      <th 
+        onClick={() => handleSort(field)}
+        style={{ padding: '1rem', fontWeight: '600', textAlign: align, cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap' }}
+        title={`Sort by ${label}`}
+      >
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', justifyContent: align === 'right' ? 'flex-end' : align === 'center' ? 'center' : 'flex-start' }}>
+          {label}
+          {isCurrent ? (
+            sortOrder === 'asc' ? <ArrowUp size={14} color="var(--brand-primary)" /> : <ArrowDown size={14} color="var(--brand-primary)" />
+          ) : (
+            <ArrowUpDown size={14} color="var(--text-muted)" style={{ opacity: 0.6 }} />
+          )}
+        </div>
+      </th>
+    );
+  };
+
 
   // Edit Modal State
   const [editModalData, setEditModalData] = useState(null);
@@ -182,6 +216,30 @@ export default function RePledge() {
       (r.date_of_loan && r.date_of_loan.includes(term))
     );
   });
+
+  const sortedRepledges = [...filteredRepledges].sort((a, b) => {
+    let valA = a[sortField];
+    let valB = b[sortField];
+
+    if (sortField === 'date_of_loan') {
+      valA = new Date(a.date_of_loan).getTime() || 0;
+      valB = new Date(b.date_of_loan).getTime() || 0;
+    } else if (sortField === 'amount') {
+      valA = Number(a.amount) || 0;
+      valB = Number(b.amount) || 0;
+    } else if (sortField === 'total_interest_paid') {
+      valA = a.transactions?.reduce((sum, t) => sum + (Number(t.amount) || 0), 0) || 0;
+      valB = b.transactions?.reduce((sum, t) => sum + (Number(t.amount) || 0), 0) || 0;
+    } else if (typeof valA === 'string') {
+      valA = (valA || '').toLowerCase();
+      valB = (valB || '').toLowerCase();
+    }
+
+    if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
+    if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
+    return 0;
+  });
+
 
   // Calculate totals
   const totalBankLoans = filteredRepledges.length;
@@ -471,25 +529,26 @@ export default function RePledge() {
             <thead style={{ backgroundColor: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-color)' }}>
               <tr>
                 <th style={{ padding: '1rem', width: '40px' }}></th>
-                <th style={{ padding: '1rem', fontWeight: '600' }}>Bank</th>
-                <th style={{ padding: '1rem', fontWeight: '600' }}>Loan No</th>
-                <th style={{ padding: '1rem', fontWeight: '600' }}>Name (Repledger)</th>
-                <th style={{ padding: '1rem', fontWeight: '600' }}>Date of Loan</th>
-                <th style={{ padding: '1rem', fontWeight: '600', textAlign: 'right' }}>Loan Amount</th>
-                <th style={{ padding: '1rem', fontWeight: '600', textAlign: 'right' }}>Total Interest Paid</th>
-                <th style={{ padding: '1rem', fontWeight: '600', textAlign: 'center' }}>Status</th>
+                {renderSortHeader('Bank', 'bank_name')}
+                {renderSortHeader('Loan No', 'loan_number')}
+                {renderSortHeader('Name (Repledger)', 'repledger_name')}
+                {renderSortHeader('Date of Loan', 'date_of_loan')}
+                {renderSortHeader('Loan Amount', 'amount', 'right')}
+                {renderSortHeader('Total Interest Paid', 'total_interest_paid', 'right')}
+                {renderSortHeader('Status', 'status', 'center')}
                 <th style={{ padding: '1rem', fontWeight: '600', textAlign: 'center' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {filteredRepledges.length === 0 ? (
+              {sortedRepledges.length === 0 ? (
                 <tr>
                   <td colSpan="9" style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
                     {searchTerm ? "No records match your search." : "No bank repledges found. Link girvis to bank loans when creating a new girvi."}
                   </td>
                 </tr>
               ) : (
-                filteredRepledges.map((repledge) => {
+                sortedRepledges.map((repledge) => {
+
                   const inputState = interestInputs[repledge.id] || {
                     amount: '',
                     payment_date: new Date().toISOString().split('T')[0],

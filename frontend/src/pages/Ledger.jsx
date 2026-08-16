@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../api/client';
-import { Loader2, Search, Plus, Eye, Edit, Trash2, Calendar, NotebookTabs, Unlock, Download, Filter, RotateCcw, Image as ImageIcon } from 'lucide-react';
+import { Loader2, Search, Plus, Eye, Edit, Trash2, Calendar, NotebookTabs, Unlock, Download, Filter, RotateCcw, Image as ImageIcon, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import LedgerModal from '../components/LedgerModal';
 import ReleaseModal from '../components/ReleaseModal';
@@ -30,12 +30,25 @@ export default function Ledger() {
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
 
+  // Sorting State
+  const [sortField, setSortField] = useState('pledge_no'); // 'pledge_no' | 'pledge_date' | 'loan_amount' | 'present_value' | 'customer_name'
+  const [sortOrder, setSortOrder] = useState('desc'); // 'asc' | 'desc'
+
   // Image Lightbox State
   const [lightbox, setLightbox] = useState(null);
 
   const navigate = useNavigate();
 
   useEffect(() => { fetchGirvis(); }, []);
+
+  const handleSort = (field) => {
+    if (sortField === field) {
+      setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('desc');
+    }
+  };
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -51,21 +64,20 @@ export default function Ledger() {
     setMetalFilter('ALL');
     setFromDate('');
     setToDate('');
+    setSortField('pledge_no');
+    setSortOrder('desc');
   };
 
+  // Filtered & Sorted Girvis
   const filteredGirvis = girvis.filter(g => {
-    // 1. Search term filter
+    // 1. Search text filter
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
-      const articleNames = g.articles?.map(a => (a.name || '').toLowerCase()).join(' ') || '';
-      const matchSearch =
-        (g.pledge_no && g.pledge_no.toLowerCase().includes(term)) ||
-        (g.customer_name && g.customer_name.toLowerCase().includes(term)) ||
-        (g.relation_name && g.relation_name.toLowerCase().includes(term)) ||
-        (g.mobile_number && g.mobile_number.includes(term)) ||
-        (g.pledge_date && g.pledge_date.includes(term)) ||
-        articleNames.includes(term);
-      if (!matchSearch) return false;
+      const matchPledge = g.pledge_no && g.pledge_no.toLowerCase().includes(term);
+      const matchName = g.customer_name && g.customer_name.toLowerCase().includes(term);
+      const matchDate = g.pledge_date && g.pledge_date.includes(term);
+      const matchArticle = g.articles && g.articles.some(a => a.name && a.name.toLowerCase().includes(term));
+      if (!matchPledge && !matchName && !matchDate && !matchArticle) return false;
     }
 
     // 2. Status filter
@@ -96,6 +108,46 @@ export default function Ledger() {
 
     return true;
   });
+
+  const sortedGirvis = [...filteredGirvis].sort((a, b) => {
+    let valA = a[sortField];
+    let valB = b[sortField];
+
+    if (sortField === 'pledge_date') {
+      valA = new Date(a.pledge_date).getTime() || 0;
+      valB = new Date(b.pledge_date).getTime() || 0;
+    } else if (sortField === 'loan_amount' || sortField === 'present_value') {
+      valA = Number(a[sortField]) || 0;
+      valB = Number(b[sortField]) || 0;
+    } else if (typeof valA === 'string') {
+      valA = (valA || '').toLowerCase();
+      valB = (valB || '').toLowerCase();
+    }
+
+    if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
+    if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  const renderSortHeader = (label, field, align = 'left') => {
+    const isCurrent = sortField === field;
+    return (
+      <th 
+        onClick={() => handleSort(field)}
+        style={{ padding: '1rem', fontWeight: '600', textAlign: align, cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap' }}
+        title={`Sort by ${label}`}
+      >
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', justifyContent: align === 'right' ? 'flex-end' : align === 'center' ? 'center' : 'flex-start' }}>
+          {label}
+          {isCurrent ? (
+            sortOrder === 'asc' ? <ArrowUp size={14} color="var(--brand-primary)" /> : <ArrowDown size={14} color="var(--brand-primary)" />
+          ) : (
+            <ArrowUpDown size={14} color="var(--text-muted)" style={{ opacity: 0.6 }} />
+          )}
+        </div>
+      </th>
+    );
+  };
 
   const fetchGirvis = async () => {
     try {
@@ -292,20 +344,20 @@ export default function Ledger() {
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
             <thead style={{ backgroundColor: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-color)' }}>
               <tr>
-                <th style={{ padding: '1rem', fontWeight: '600' }}>Pledge No</th>
-                <th style={{ padding: '1rem', fontWeight: '600' }}>Customer</th>
+                {renderSortHeader('Pledge No', 'pledge_no')}
+                {renderSortHeader('Customer', 'customer_name')}
                 <th style={{ padding: '1rem', fontWeight: '600' }}>Mobile</th>
                 <th style={{ padding: '1rem', fontWeight: '600' }}>Item Description</th>
                 <th style={{ padding: '1rem', fontWeight: '600' }}>Weight</th>
-                <th style={{ padding: '1rem', fontWeight: '600' }}>Dates</th>
-                <th style={{ padding: '1rem', fontWeight: '600' }}>Total Value</th>
-                <th style={{ padding: '1rem', fontWeight: '600' }}>Loan Amount</th>
+                {renderSortHeader('Dates', 'pledge_date')}
+                {renderSortHeader('Total Value', 'present_value', 'right')}
+                {renderSortHeader('Loan Amount', 'loan_amount', 'right')}
                 <th style={{ padding: '1rem', fontWeight: '600', textAlign: 'center' }}>Status</th>
                 <th style={{ padding: '1rem', fontWeight: '600', textAlign: 'center' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {filteredGirvis.length === 0 ? (
+              {sortedGirvis.length === 0 ? (
                 <tr>
                   <td colSpan="10" style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
                     {(searchTerm || statusFilter !== 'ALL' || metalFilter !== 'ALL' || fromDate || toDate) 
@@ -314,7 +366,8 @@ export default function Ledger() {
                   </td>
                 </tr>
               ) : (
-                filteredGirvis.map((girvi) => (
+                sortedGirvis.map((girvi) => (
+
                   <tr key={girvi.id} style={{ borderBottom: '1px solid var(--border-color)', transition: 'background-color 0.2s' }}>
                     <td style={{ padding: '1rem', fontWeight: '600' }}>{girvi.pledge_no}</td>
                     
