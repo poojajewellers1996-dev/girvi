@@ -738,6 +738,7 @@ export default function RePledge() {
             <thead style={{ backgroundColor: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-color)' }}>
               <tr>
                 <th style={{ padding: '1rem', width: '40px' }}></th>
+                <th style={{ padding: '1rem', fontWeight: '600', width: '50px', textAlign: 'center' }}>S.No.</th>
                 {renderSortHeader('Bank', 'bank_name')}
                 {renderSortHeader('Loan No', 'loan_number')}
                 {renderSortHeader('Name (Repledger)', 'repledger_name')}
@@ -751,12 +752,12 @@ export default function RePledge() {
             <tbody>
               {sortedRepledges.length === 0 ? (
                 <tr>
-                  <td colSpan="9" style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                  <td colSpan="10" style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
                     {searchTerm ? "No records match your search." : "No bank repledges found. Link girvis to bank loans when creating a new girvi."}
                   </td>
                 </tr>
               ) : (
-                sortedRepledges.map((repledge) => {
+                sortedRepledges.map((repledge, index) => {
 
                   const inputState = interestInputs[repledge.id] || {
                     amount: '',
@@ -773,6 +774,9 @@ export default function RePledge() {
                       >
                         <td style={{ padding: '1rem', color: 'var(--text-muted)' }}>
                           {expandedRows.has(repledge.id) ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                        </td>
+                        <td style={{ padding: '1rem', fontWeight: '600', textAlign: 'center', color: 'var(--text-muted)' }}>
+                          {index + 1}
                         </td>
                         <td style={{ padding: '1rem', fontWeight: '600' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -837,7 +841,7 @@ export default function RePledge() {
                       {expandedRows.has(repledge.id) && (
                         <tr style={{ backgroundColor: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-color)' }}>
                           <td></td>
-                          <td colSpan="8" style={{ padding: '0 1rem 1.5rem 1rem' }}>
+                          <td colSpan="9" style={{ padding: '0 1rem 1.5rem 1rem' }}>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                               
                               {/* 1. Mini Ledger: Interest Payments Log */}
@@ -916,6 +920,7 @@ export default function RePledge() {
                                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
                                     <thead>
                                       <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)' }}>
+                                        <th style={{ padding: '0.5rem 1rem', textAlign: 'center', fontWeight: '500', width: '50px' }}>S.No.</th>
                                         <th style={{ padding: '0.5rem 1rem', textAlign: 'left', fontWeight: '500' }}>Date of Payment</th>
                                         <th style={{ padding: '0.5rem 1rem', textAlign: 'right', fontWeight: '500' }}>Interest Paid</th>
                                         <th style={{ padding: '0.5rem 1rem', textAlign: 'left', fontWeight: '500' }}>Remarks</th>
@@ -923,8 +928,9 @@ export default function RePledge() {
                                       </tr>
                                     </thead>
                                     <tbody>
-                                      {repledge.transactions.map(t => (
+                                      {repledge.transactions.map((t, tIdx) => (
                                         <tr key={t.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                                          <td style={{ padding: '0.5rem 1rem', textAlign: 'center', color: 'var(--text-muted)' }}>{tIdx + 1}</td>
                                           <td style={{ padding: '0.5rem 1rem', fontWeight: '500' }}>{formatDate(t.payment_date)}</td>
                                           <td style={{ padding: '0.5rem 1rem', textAlign: 'right', fontWeight: '700', color: '#f59e0b' }}>₹{t.amount?.toLocaleString('en-IN')}</td>
                                           <td style={{ padding: '0.5rem 1rem', color: 'var(--text-secondary)' }}>{t.remarks || '-'}</td>
@@ -959,6 +965,7 @@ export default function RePledge() {
                                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
                                     <thead>
                                       <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)' }}>
+                                        <th style={{ padding: '0.5rem 1rem', textAlign: 'center', fontWeight: '500', width: '50px' }}>S.No.</th>
                                         <th style={{ padding: '0.5rem 1rem', textAlign: 'left', fontWeight: '500' }}>Pledge No</th>
                                         <th style={{ padding: '0.5rem 1rem', textAlign: 'left', fontWeight: '500' }}>Customer</th>
                                         <th style={{ padding: '0.5rem 1rem', textAlign: 'right', fontWeight: '500' }}>Girvi Value</th>
@@ -967,8 +974,9 @@ export default function RePledge() {
                                       </tr>
                                     </thead>
                                     <tbody>
-                                      {repledge.girvis.map(girvi => (
+                                      {repledge.girvis.map((girvi, gIdx) => (
                                         <tr key={girvi.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                                          <td style={{ padding: '0.5rem 1rem', textAlign: 'center', color: 'var(--text-muted)' }}>{gIdx + 1}</td>
                                           <td style={{ padding: '0.5rem 1rem', fontWeight: '600' }}>{girvi.pledge_no}</td>
                                           <td style={{ padding: '0.5rem 1rem' }}>{girvi.customer_name}</td>
                                           <td style={{ padding: '0.5rem 1rem', textAlign: 'right' }}>₹{girvi.present_value?.toLocaleString('en-IN') || 0}</td>

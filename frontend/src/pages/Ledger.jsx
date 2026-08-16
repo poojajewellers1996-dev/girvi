@@ -78,7 +78,8 @@ export default function Ledger() {
       const matchName = g.customer_name && g.customer_name.toLowerCase().includes(term);
       const matchDate = g.pledge_date && g.pledge_date.includes(term);
       const matchArticle = g.articles && g.articles.some(a => a.name && a.name.toLowerCase().includes(term));
-      if (!matchPledge && !matchName && !matchDate && !matchArticle) return false;
+      const matchRepledge = g.repledges && g.repledges.some(r => (r.loan_number && r.loan_number.toLowerCase().includes(term)) || (r.bank_name && r.bank_name.toLowerCase().includes(term)));
+      if (!matchPledge && !matchName && !matchDate && !matchArticle && !matchRepledge) return false;
     }
 
     // 2. Status filter
@@ -345,6 +346,7 @@ export default function Ledger() {
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
             <thead style={{ backgroundColor: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-color)' }}>
               <tr>
+                <th style={{ padding: '1rem', fontWeight: '600', width: '50px', textAlign: 'center' }}>S.No.</th>
                 {renderSortHeader('Pledge No', 'pledge_no')}
                 {renderSortHeader('Customer', 'customer_name')}
                 <th style={{ padding: '1rem', fontWeight: '600' }}>Mobile</th>
@@ -361,17 +363,26 @@ export default function Ledger() {
             <tbody>
               {sortedGirvis.length === 0 ? (
                 <tr>
-                  <td colSpan="11" style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                  <td colSpan="12" style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
                     {(searchTerm || statusFilter !== 'ALL' || metalFilter !== 'ALL' || fromDate || toDate) 
                       ? 'No records match your filters.' 
                       : 'No records found. Click "New Girvi" to create one.'}
                   </td>
                 </tr>
               ) : (
-                sortedGirvis.map((girvi) => (
+                sortedGirvis.map((girvi, index) => (
 
                   <tr key={girvi.id} style={{ borderBottom: '1px solid var(--border-color)', transition: 'background-color 0.2s' }}>
-                    <td style={{ padding: '1rem', fontWeight: '600' }}>{girvi.pledge_no}</td>
+                    <td style={{ padding: '1rem', fontWeight: '600', textAlign: 'center', color: 'var(--text-muted)' }}>{index + 1}</td>
+                    <td style={{ padding: '1rem', fontWeight: '600' }}>
+                      <div>{girvi.pledge_no}</div>
+                      {girvi.repledges && girvi.repledges.length > 0 && (
+                        <div style={{ fontSize: '0.75rem', fontWeight: '500', color: 'var(--brand-primary)', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '2px' }}>
+                          <Landmark size={12} />
+                          {girvi.repledges.map(r => r.loan_number).join(', ')}
+                        </div>
+                      )}
+                    </td>
                     
                     {/* Customer Name & Photo Thumbnail */}
                     <td style={{ padding: '1rem' }}>
