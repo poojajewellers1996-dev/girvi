@@ -167,21 +167,29 @@ export default function NewGirvi() {
     const { name, value } = e.target;
     setArticles((prev) => {
       const newArticles = [...prev];
-      let val = value;
-      if (['quantity'].includes(name)) val = value === '' ? '' : (parseInt(value) || '');
-      if (['gross_wt', 'less_wt', 'net_wt', 'present_value', 'loan_amount'].includes(name)) val = value === '' ? '' : (parseFloat(value) || '');
+      newArticles[index] = { ...newArticles[index], [name]: value };
       
-      newArticles[index] = { ...newArticles[index], [name]: val };
-      
-      // Auto calculate net_wt
+      // Auto calculate net_wt rounded to 3 decimal places
       if (name === 'gross_wt' || name === 'less_wt') {
-        const gross = Number(newArticles[index].gross_wt) || 0;
-        const less = Number(newArticles[index].less_wt) || 0;
-        newArticles[index].net_wt = Math.max(0, gross - less) || '';
+        const grossStr = name === 'gross_wt' ? value : newArticles[index].gross_wt;
+        const lessStr = name === 'less_wt' ? value : newArticles[index].less_wt;
+
+        const gross = parseFloat(grossStr) || 0;
+        const less = parseFloat(lessStr) || 0;
+
+        if (grossStr !== '' || lessStr !== '') {
+          const net = Math.max(0, gross - less);
+          // Round to 3 decimal places to fix floating point math precision bug (e.g. 4.6 - 0.6 = 4.0 instead of 3.9999999999999996)
+          const roundedNet = Math.round(net * 1000) / 1000;
+          newArticles[index].net_wt = roundedNet;
+        } else {
+          newArticles[index].net_wt = '';
+        }
       }
 
       if (name === 'loan_amount') {
-        newArticles[index].loan_amount_words = numberToWords(val);
+        const numVal = parseFloat(value) || 0;
+        newArticles[index].loan_amount_words = numberToWords(numVal);
       }
 
       return newArticles;
@@ -308,9 +316,16 @@ export default function NewGirvi() {
         mobile_number: girviData.mobile_number ? (girviData.mobile_number.startsWith('+') ? girviData.mobile_number : `+91${girviData.mobile_number}`) : null,
         articles: articles.map(art => ({
           ...art,
+          quantity: parseInt(art.quantity, 10) || 1,
+          gross_wt: parseFloat(art.gross_wt) || 0,
+          less_wt: parseFloat(art.less_wt) || 0,
+          net_wt: parseFloat(art.net_wt) || 0,
+          present_value: parseFloat(art.present_value) || 0,
+          loan_amount: parseFloat(art.loan_amount) || 0,
           loan_amount_words: art.loan_amount_words || 'Zero'
         }))
       };
+
 
       if (!payload.loan_amount_words) {
          payload.loan_amount_words = 'Zero';
