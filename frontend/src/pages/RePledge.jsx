@@ -265,25 +265,51 @@ export default function RePledge() {
       
       {/* Edit Bank Loan Modal */}
       {editModalData && (
-        <div style={{
-          position: 'fixed', inset: 0,
-          background: 'rgba(15, 23, 42, 0.65)',
-          backdropFilter: 'blur(6px)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          zIndex: 1000, padding: '1rem',
-          animation: 'fadeIn 0.2s ease-out'
-        }}>
-          <div className="card" style={{
-            width: '100%', maxWidth: '480px',
-            padding: '1.5rem', borderRadius: '16px',
-            background: 'var(--bg-surface)',
-            boxShadow: 'var(--shadow-lg)'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.75rem' }}>
-              <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+        <div 
+          onClick={() => setEditModalData(null)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            width: '100vw',
+            height: '100vh',
+            background: 'rgba(15, 23, 42, 0.7)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justify: 'center',
+            zIndex: 99999,
+            padding: '1rem'
+          }}
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: '100%',
+              maxWidth: '480px',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              padding: '1.5rem',
+              borderRadius: '16px',
+              background: '#ffffff',
+              color: '#0f172a',
+              boxShadow: '0 20px 40px rgba(0, 0, 0, 0.25)',
+              border: '1px solid #e2e8f0',
+              animation: 'fadeIn 0.2s ease-out'
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.75rem' }}>
+              <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                 <Edit size={20} color="var(--brand-primary)" /> Edit Bank Loan #{editModalData.loan_number}
               </h3>
-              <button onClick={() => setEditModalData(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
+              <button 
+                type="button"
+                onClick={() => setEditModalData(null)} 
+                style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', padding: '4px' }}
+              >
                 <X size={20} />
               </button>
             </div>
@@ -393,7 +419,7 @@ export default function RePledge() {
                 <button
                   type="submit"
                   className="btn btn-primary"
-                  style={{ flex: 1, background: 'var(--gradient-brand)' }}
+                  style={{ flex: 1, background: 'var(--brand-primary)', color: '#ffffff' }}
                   disabled={actionLoading}
                 >
                   {actionLoading ? <Loader2 className="spin" size={18} /> : 'Save Changes'}
@@ -404,6 +430,7 @@ export default function RePledge() {
           </div>
         </div>
       )}
+
 
       {/* Header Bar */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
