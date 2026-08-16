@@ -135,6 +135,13 @@ class RepledgeUpdate(BaseModel):
     amount: Optional[float] = None
     status: Optional[str] = None
 
+class RepledgeReleaseRequest(BaseModel):
+    release_date: Optional[datetime] = None
+    final_interest_paid: Optional[float] = 0.0
+    person_taking: Optional[str] = None
+    remarks: Optional[str] = None
+
+
 
 
 class RepledgeTransactionCreate(BaseModel):

@@ -192,12 +192,39 @@ export default function RePledge() {
     }
   };
 
-  const handleReleaseRepledge = async (e, id, loanNo) => {
+  // Release Modal State
+  const [releaseModalData, setReleaseModalData] = useState(null);
+  const [releaseForm, setReleaseForm] = useState({
+    release_date: new Date().toISOString().split('T')[0],
+    final_interest_paid: 0,
+    person_taking: 'Self / Owner',
+    remarks: ''
+  });
+
+  const handleOpenReleaseModal = (e, repledge) => {
     e.stopPropagation();
-    if (!window.confirm(`Are you sure you want to release / close Bank Loan #${loanNo}?`)) return;
+    setReleaseModalData(repledge);
+    setReleaseForm({
+      release_date: new Date().toISOString().split('T')[0],
+      final_interest_paid: 0,
+      person_taking: 'Self / Owner',
+      remarks: ''
+    });
+  };
+
+  const handleReleaseSubmit = async (e) => {
+    e.preventDefault();
+    if (!releaseModalData) return;
     try {
       setActionLoading(true);
-      await api.releaseRepledge(id);
+      await api.releaseRepledge(releaseModalData.id, {
+        release_date: toISOAtNoon(releaseForm.release_date),
+        final_interest_paid: parseFloat(releaseForm.final_interest_paid) || 0,
+        person_taking: releaseForm.person_taking || 'Self / Owner',
+        remarks: releaseForm.remarks || null
+      });
+
+      setReleaseModalData(null);
       await fetchRepledges();
     } catch (err) {
       alert(err.message || 'Failed to release Bank Loan');
@@ -205,6 +232,7 @@ export default function RePledge() {
       setActionLoading(false);
     }
   };
+
 
   const filteredRepledges = repledges.filter(r => {
     if (!searchTerm) return true;
@@ -432,8 +460,162 @@ export default function RePledge() {
       )}
 
 
+      {/* Release Bank Loan Modal */}
+      {releaseModalData && (
+        <div 
+          onClick={() => setReleaseModalData(null)}
+          style={{
+            position: 'fixed',
+            top: 0, left: 0, right: 0, bottom: 0,
+            width: '100vw', height: '100vh',
+            background: 'rgba(15, 23, 42, 0.7)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 99999, padding: '1rem'
+          }}
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: '100%', maxWidth: '500px',
+              maxHeight: '90vh', overflowY: 'auto',
+              padding: '1.5rem', borderRadius: '16px',
+              background: '#ffffff', color: '#0f172a',
+              boxShadow: '0 20px 40px rgba(0, 0, 0, 0.25)',
+              border: '1px solid #e2e8f0',
+              animation: 'fadeIn 0.2s ease-out'
+            }}
+          >
+            {/* Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.75rem' }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <Unlock size={20} color="#8b5cf6" /> Release Bank Loan #{releaseModalData.loan_number}
+                </h3>
+                <span style={{ fontSize: '0.8rem', color: '#64748b' }}>Bank: <strong>{releaseModalData.bank_name}</strong> | Repledger: <strong>{releaseModalData.repledger_name}</strong></span>
+              </div>
+              <button 
+                type="button"
+                onClick={() => setReleaseModalData(null)} 
+                style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', padding: '4px' }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Financial Summary Card */}
+            <div style={{ background: '#f8fafc', borderRadius: '12px', padding: '1rem', border: '1px solid #e2e8f0', marginBottom: '1.25rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
+              <div style={{ background: '#ecfdf5', padding: '0.75rem', borderRadius: '8px', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                <div style={{ fontSize: '0.725rem', fontWeight: 700, color: '#059669', textTransform: 'uppercase' }}>Principal Loan</div>
+                <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#059669', marginTop: '2px' }}>₹{releaseModalData.amount?.toLocaleString('en-IN')}</div>
+              </div>
+              <div style={{ background: '#fffbeb', padding: '0.75rem', borderRadius: '8px', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
+                <div style={{ fontSize: '0.725rem', fontWeight: 700, color: '#d97706', textTransform: 'uppercase' }}>Total Interest Paid</div>
+                <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#d97706', marginTop: '2px' }}>
+                  ₹{(releaseModalData.transactions?.reduce((sum, t) => sum + (Number(t.amount) || 0), 0) || 0).toLocaleString('en-IN')}
+                </div>
+              </div>
+            </div>
+
+            <form onSubmit={handleReleaseSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              
+              {/* Release Date */}
+              <div className="input-group" style={{ margin: 0 }}>
+                <label htmlFor="rel_date" className="input-label">Release / Settlement Date</label>
+                <input
+                  id="rel_date"
+                  name="rel_date"
+                  type="date"
+                  value={releaseForm.release_date}
+                  onChange={(e) => setReleaseForm({ ...releaseForm, release_date: e.target.value })}
+                  className="input-field"
+                  required
+                />
+              </div>
+
+              {/* Final Interest / Settlement Paid */}
+              <div className="input-group" style={{ margin: 0 }}>
+                <label htmlFor="rel_final_interest" className="input-label" style={{ color: '#d97706' }}>Final Interest Amount Paid to Bank (₹)</label>
+                <input
+                  id="rel_final_interest"
+                  name="rel_final_interest"
+                  type="number"
+                  step="1"
+                  value={releaseForm.final_interest_paid}
+                  onChange={(e) => setReleaseForm({ ...releaseForm, final_interest_paid: e.target.value })}
+                  className="input-field"
+                  placeholder="0 if no extra interest paid at release"
+                  style={{ fontWeight: 700, fontSize: '1rem', color: '#d97706' }}
+                />
+              </div>
+
+              {/* Person Taking Item / Released By */}
+              <div className="input-group" style={{ margin: 0 }}>
+                <label htmlFor="rel_person" className="input-label">Person Taking Item / Released By</label>
+                <input
+                  id="rel_person"
+                  name="rel_person"
+                  type="text"
+                  value={releaseForm.person_taking}
+                  onChange={(e) => setReleaseForm({ ...releaseForm, person_taking: e.target.value })}
+                  className="input-field"
+                  placeholder="e.g. Self / Owner / Ramesh (Agent)"
+                  required
+                />
+              </div>
+
+              {/* Remarks */}
+              <div className="input-group" style={{ margin: 0 }}>
+                <label htmlFor="rel_remarks" className="input-label">Release Remarks / Audit Note</label>
+                <input
+                  id="rel_remarks"
+                  name="rel_remarks"
+                  type="text"
+                  value={releaseForm.remarks}
+                  onChange={(e) => setReleaseForm({ ...releaseForm, remarks: e.target.value })}
+                  className="input-field"
+                  placeholder="e.g. Closed loan from bank, items retrieved safely"
+                />
+              </div>
+
+              {/* Total Settlement Calculation Note */}
+              <div style={{ padding: '0.75rem', borderRadius: '8px', background: '#f1f5f9', border: '1px solid #cbd5e1', fontSize: '0.825rem', color: '#475569' }}>
+                💰 <strong>Total Final Cost to Release Bank Loan:</strong>
+                <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#8b5cf6', marginTop: '4px' }}>
+                  ₹{((Number(releaseModalData.amount) || 0) + (Number(releaseForm.final_interest_paid) || 0)).toLocaleString('en-IN')}
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setReleaseModalData(null)}
+                  style={{ flex: 1 }}
+                  disabled={actionLoading}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  style={{ flex: 1, background: '#8b5cf6', color: '#ffffff' }}
+                  disabled={actionLoading}
+                >
+                  {actionLoading ? <Loader2 className="spin" size={18} /> : 'Confirm Bank Release'}
+                </button>
+              </div>
+
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Header Bar */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+
         <div>
           <h2 style={{ fontSize: '1.5rem', fontWeight: '700', margin: 0 }}>Bank Re-Pledge Dashboard</h2>
           <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '0.875rem' }}>Track bank loans and interest payment logs</p>
@@ -640,7 +822,7 @@ export default function RePledge() {
                               <button 
                                 className="btn btn-secondary" 
                                 style={{ padding: '0.35rem 0.6rem', fontSize: '0.78rem', color: '#8b5cf6', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
-                                onClick={(e) => handleReleaseRepledge(e, repledge.id, repledge.loan_number)}
+                                onClick={(e) => handleOpenReleaseModal(e, repledge)}
                                 disabled={actionLoading}
                                 title="Release / Close Bank Loan"
                               >

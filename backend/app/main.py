@@ -302,14 +302,31 @@ def delete_repledge_transaction(
 @app.patch("/repledge/{repledge_id}/release/", response_model=schemas.RepledgeRead)
 def release_repledge(
     repledge_id: int,
+    data: Optional[schemas.RepledgeReleaseRequest] = None,
     db: Session = Depends(get_db),
     token: dict = Depends(get_current_user),
 ):
     released = crud.update_repledge_status(db, repledge_id, "Released")
     if not released:
         raise HTTPException(status_code=404, detail="Bank repledge not found")
-    log_system_action(db, "REPLEDGE_RELEASE", f"Released bank loan #{released.loan_number}", module="REPLEDGE")
+
+    log_msg = f"Released Bank Loan #{released.loan_number} ({released.bank_name}). Principal: ₹{released.amount}"
+    
+    if data:
+        if data.final_interest_paid and data.final_interest_paid > 0:
+            crud.create_repledge_transaction(db, repledge_id, schemas.RepledgeTransactionCreate(
+                amount=data.final_interest_paid,
+                payment_date=data.release_date or datetime.datetime.now(),
+                remarks=f"Final Settlement Interest (Released by {data.person_taking or 'Owner'})"
+            ))
+            log_msg += f", Final Interest Paid: ₹{data.final_interest_paid}"
+
+        if data.person_taking:
+            log_msg += f", Released By: {data.person_taking}"
+
+    log_system_action(db, "REPLEDGE_RELEASE", log_msg, module="REPLEDGE")
     return schemas.RepledgeRead.model_validate(released)
+
 
 @app.put("/repledge/{repledge_id}", response_model=schemas.RepledgeRead)
 @app.put("/repledge/{repledge_id}/", response_model=schemas.RepledgeRead)

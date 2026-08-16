@@ -121,9 +121,11 @@ export const api = {
   deleteRepledgeTransaction: (transactionId) => request(`/repledge/transactions/${transactionId}`, {
     method: 'DELETE'
   }),
-  releaseRepledge: (id) => request(`/repledge/${id}/release`, {
-    method: 'PATCH'
+  releaseRepledge: (id, data) => request(`/repledge/${id}/release`, {
+    method: 'PATCH',
+    body: data ? JSON.stringify(data) : undefined
   }),
+
   updateRepledge: (id, data) => request(`/repledge/${id}`, {
     method: 'PUT',
     body: JSON.stringify(data)
