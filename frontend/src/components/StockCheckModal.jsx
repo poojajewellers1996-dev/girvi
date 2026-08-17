@@ -276,82 +276,84 @@ export default function StockCheckModal({ isOpen, onClose, girvis = [] }) {
         alignItems: 'center',
         justifyContent: 'center',
         zIndex: 99999,
-        padding: '1rem'
+        padding: '0.75rem',
+        boxSizing: 'border-box'
       }}
     >
       <div 
         onClick={(e) => e.stopPropagation()}
         style={{
           width: '100%',
-          maxWidth: '1280px',
-          height: '92vh',
-          maxHeight: '92vh',
+          maxWidth: '1240px',
+          height: '94vh',
+          maxHeight: '94vh',
           display: 'flex',
           flexDirection: 'column',
           borderRadius: '16px',
           background: 'var(--bg-surface, #ffffff)',
           color: 'var(--text-primary, #0f172a)',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.3)',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)',
           border: '1px solid var(--border-color, #e2e8f0)',
           overflow: 'hidden',
+          boxSizing: 'border-box',
           animation: 'fadeIn 0.2s ease-out'
         }}
       >
         {/* Header Bar */}
-        <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+        <div style={{ padding: '0.85rem 1.25rem', borderBottom: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-              <PackageCheck size={26} color="var(--brand-primary, #4f46e5)" />
-              <h2 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 800 }}>In-Shop Physical Girvi Stock Audit</h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <PackageCheck size={22} color="var(--brand-primary, #4f46e5)" />
+              <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800 }}>In-Shop Physical Girvi Stock Audit</h2>
             </div>
-            <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-              Verify physically present shop inventory. Excludes repledged bank loans & released items.
+            <p style={{ margin: '2px 0 0 0', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+              Verify physically present shop inventory (excludes repledged bank loans & released items).
             </p>
           </div>
 
-          {/* Metal Type Switcher Buttons */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <div style={{ display: 'flex', background: 'var(--bg-primary)', padding: '3px', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
+          {/* Metal Type Switcher Buttons & Controls */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', background: 'var(--bg-primary)', padding: '2px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
               <button 
                 type="button"
                 onClick={() => setMetalType('gold')}
                 style={{
-                  padding: '0.45rem 1.1rem',
-                  borderRadius: '8px',
+                  padding: '0.35rem 0.85rem',
+                  borderRadius: '6px',
                   border: 'none',
-                  fontSize: '0.875rem',
+                  fontSize: '0.8rem',
                   fontWeight: 700,
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '0.4rem',
+                  gap: '0.35rem',
                   backgroundColor: metalType === 'gold' ? '#f59e0b' : 'transparent',
                   color: metalType === 'gold' ? '#ffffff' : 'var(--text-secondary)',
                   transition: 'all 0.2s ease'
                 }}
               >
-                <Award size={16} /> Gold Stock ({nonRepledgedGirvis.filter(g => !isGirviSilver(g)).length})
+                <Award size={15} /> Gold Stock ({nonRepledgedGirvis.filter(g => !isGirviSilver(g)).length})
               </button>
 
               <button 
                 type="button"
                 onClick={() => setMetalType('silver')}
                 style={{
-                  padding: '0.45rem 1.1rem',
-                  borderRadius: '8px',
+                  padding: '0.35rem 0.85rem',
+                  borderRadius: '6px',
                   border: 'none',
-                  fontSize: '0.875rem',
+                  fontSize: '0.8rem',
                   fontWeight: 700,
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '0.4rem',
+                  gap: '0.35rem',
                   backgroundColor: metalType === 'silver' ? '#3b82f6' : 'transparent',
                   color: metalType === 'silver' ? '#ffffff' : 'var(--text-secondary)',
                   transition: 'all 0.2s ease'
                 }}
               >
-                <Layers size={16} /> Silver Stock ({nonRepledgedGirvis.filter(g => isGirviSilver(g)).length})
+                <Layers size={15} /> Silver Stock ({nonRepledgedGirvis.filter(g => isGirviSilver(g)).length})
               </button>
             </div>
 
@@ -359,16 +361,16 @@ export default function StockCheckModal({ isOpen, onClose, girvis = [] }) {
               type="button" 
               className="btn btn-secondary" 
               onClick={handlePrintAudit} 
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.45rem 0.85rem', fontSize: '0.85rem' }}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: '0.35rem 0.75rem', fontSize: '0.8rem' }}
               title="Print Stock Audit Report"
             >
-              <Printer size={16} /> Print Report
+              <Printer size={15} /> Print Report
             </button>
 
             <button 
               type="button" 
               onClick={onClose}
-              style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '6px', borderRadius: '50%' }}
+              style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '4px', borderRadius: '50%', display: 'flex', alignItems: 'center' }}
             >
               <X size={22} />
             </button>
@@ -376,38 +378,79 @@ export default function StockCheckModal({ isOpen, onClose, girvis = [] }) {
         </div>
 
         {/* Progress & Summary Bar */}
-        <div style={{ padding: '0.85rem 1.5rem', backgroundColor: 'var(--bg-surface-2, #f8fafc)', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+        <div style={{ padding: '0.65rem 1.25rem', backgroundColor: 'var(--bg-surface-2, #f8fafc)', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
           
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', flexWrap: 'wrap' }}>
             <div>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Total Shop Stock</span>
-              <div style={{ fontWeight: 800, fontSize: '1.05rem', color: 'var(--text-primary)' }}>
-                {totalMetalItemsCount} items <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontWeight: 600 }}>({totalMetalWeight.toFixed(2)} g)</span>
+              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Total Shop Stock</span>
+              <div style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--text-primary)' }}>
+                {totalMetalItemsCount} items <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>({totalMetalWeight.toFixed(2)} g)</span>
               </div>
             </div>
 
-            <div style={{ height: '30px', width: '1px', backgroundColor: 'var(--border-color)' }}></div>
+            <div style={{ height: '24px', width: '1px', backgroundColor: 'var(--border-color)' }}></div>
 
             <div>
-              <span style={{ fontSize: '0.75rem', color: '#16a34a', textTransform: 'uppercase', fontWeight: 700 }}>Checked Stock</span>
-              <div style={{ fontWeight: 800, fontSize: '1.05rem', color: '#16a34a' }}>
-                {checkedItems.length} items <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>({checkedWeight.toFixed(2)} g)</span>
+              <span style={{ fontSize: '0.7rem', color: '#16a34a', textTransform: 'uppercase', fontWeight: 700 }}>Checked Stock</span>
+              <div style={{ fontWeight: 800, fontSize: '0.95rem', color: '#16a34a' }}>
+                {checkedItems.length} items <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>({checkedWeight.toFixed(2)} g)</span>
               </div>
             </div>
 
-            <div style={{ height: '30px', width: '1px', backgroundColor: 'var(--border-color)' }}></div>
+            <div style={{ height: '24px', width: '1px', backgroundColor: 'var(--border-color)' }}></div>
 
             <div>
-              <span style={{ fontSize: '0.75rem', color: '#dc2626', textTransform: 'uppercase', fontWeight: 700 }}>Pending Stock</span>
-              <div style={{ fontWeight: 800, fontSize: '1.05rem', color: '#dc2626' }}>
-                {pendingItems.length} items <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>({pendingWeight.toFixed(2)} g)</span>
+              <span style={{ fontSize: '0.7rem', color: '#dc2626', textTransform: 'uppercase', fontWeight: 700 }}>Pending Stock</span>
+              <div style={{ fontWeight: 800, fontSize: '0.95rem', color: '#dc2626' }}>
+                {pendingItems.length} items <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>({pendingWeight.toFixed(2)} g)</span>
               </div>
             </div>
           </div>
 
           {/* Progress Bar & Actions */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: '1 1 300px', maxWidth: '400px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: '1 1 260px', maxWidth: '380px' }}>
             <div style={{ flex: 1 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: 700, marginBottom: '3px' }}>
+                <span>Audit Progress</span>
+                <span style={{ color: progressPercent === 100 ? '#16a34a' : 'var(--brand-primary)' }}>{progressPercent}% Checked</span>
+              </div>
+              <div style={{ width: '100%', height: '7px', backgroundColor: 'var(--border-color)', borderRadius: '99px', overflow: 'hidden' }}>
+                <div 
+                  style={{ 
+                    height: '100%', 
+                    width: `${progressPercent}%`, 
+                    backgroundColor: progressPercent === 100 ? '#16a34a' : 'var(--brand-primary, #4f46e5)', 
+                    transition: 'width 0.3s ease' 
+                  }}
+                ></div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.35rem' }}>
+              <button 
+                type="button" 
+                className="btn btn-secondary" 
+                onClick={handleCheckAllCurrent} 
+                disabled={pendingItems.length === 0}
+                style={{ padding: '0.3rem 0.55rem', fontSize: '0.75rem' }}
+                title="Mark all current pending items as checked"
+              >
+                Check All
+              </button>
+              <button 
+                type="button" 
+                className="btn btn-secondary" 
+                onClick={handleResetCurrent} 
+                disabled={checkedItems.length === 0}
+                style={{ padding: '0.3rem 0.55rem', fontSize: '0.75rem', color: '#dc2626' }}
+                title="Reset verification state for current metal"
+              >
+                <RotateCcw size={11} /> Reset
+              </button>
+            </div>
+          </div>
+
+        </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', fontWeight: 700, marginBottom: '4px' }}>
                 <span>Audit Progress</span>
                 <span style={{ color: progressPercent === 100 ? '#16a34a' : 'var(--brand-primary)' }}>{progressPercent}% Checked</span>
