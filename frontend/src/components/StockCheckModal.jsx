@@ -451,47 +451,6 @@ export default function StockCheckModal({ isOpen, onClose, girvis = [] }) {
           </div>
 
         </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', fontWeight: 700, marginBottom: '4px' }}>
-                <span>Audit Progress</span>
-                <span style={{ color: progressPercent === 100 ? '#16a34a' : 'var(--brand-primary)' }}>{progressPercent}% Checked</span>
-              </div>
-              <div style={{ width: '100%', height: '8px', backgroundColor: 'var(--border-color)', borderRadius: '99px', overflow: 'hidden' }}>
-                <div 
-                  style={{ 
-                    height: '100%', 
-                    width: `${progressPercent}%`, 
-                    backgroundColor: progressPercent === 100 ? '#16a34a' : 'var(--brand-primary, #4f46e5)', 
-                    transition: 'width 0.3s ease' 
-                  }}
-                ></div>
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', gap: '0.4rem' }}>
-              <button 
-                type="button" 
-                className="btn btn-secondary" 
-                onClick={handleCheckAllCurrent} 
-                disabled={pendingItems.length === 0}
-                style={{ padding: '0.35rem 0.65rem', fontSize: '0.78rem' }}
-                title="Mark all current pending items as checked"
-              >
-                Check All
-              </button>
-              <button 
-                type="button" 
-                className="btn btn-secondary" 
-                onClick={handleResetCurrent} 
-                disabled={checkedItems.length === 0}
-                style={{ padding: '0.35rem 0.65rem', fontSize: '0.78rem', color: '#dc2626' }}
-                title="Reset verification state for current metal"
-              >
-                <RotateCcw size={12} /> Reset
-              </button>
-            </div>
-          </div>
-
-        </div>
 
         {/* Main Split Grid (Left: Pending Stock | Right: Checked Stock) */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', flex: 1, overflow: 'hidden' }}>
