@@ -13,6 +13,7 @@ import SystemLogs from './pages/SystemLogs';
 import Settings from './pages/Settings';
 import PrintBill from './pages/PrintBill';
 import CalculatorPage from './pages/CalculatorPage';
+import StockCheck from './pages/StockCheck';
 
 const PrivateRoute = ({ children }) => {
   const token = getAuthToken();
@@ -41,6 +42,7 @@ function App() {
             <Route path="girvi/edit/:id" element={<NewGirvi />} />
             <Route path="ledger" element={<Ledger />} />
             <Route path="re-pledge" element={<RePledge />} />
+            <Route path="stock-check" element={<StockCheck />} />
             <Route path="calculator" element={<CalculatorPage />} />
             <Route path="logs" element={<SystemLogs />} />
             <Route path="settings" element={<Settings />} />

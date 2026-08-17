@@ -5,7 +5,6 @@ import { useNavigate } from 'react-router-dom';
 import LedgerModal from '../components/LedgerModal';
 import ReleaseModal from '../components/ReleaseModal';
 import ImageLightbox from '../components/ImageLightbox';
-import StockCheckModal from '../components/StockCheckModal';
 import { exportGirviLedger } from '../utils/exportUtils';
 import { formatDate } from '../utils/dateUtils';
 
@@ -15,7 +14,6 @@ export default function Ledger() {
   const [error, setError] = useState(null);
 
   const [showLedgerModal, setShowLedgerModal] = useState(false);
-  const [showStockCheckModal, setShowStockCheckModal] = useState(false);
   const [activeGirvi, setActiveGirvi] = useState(null);
 
   // Release modal state
@@ -211,13 +209,6 @@ export default function Ledger() {
         />
       )}
 
-      {/* Stock Check Modal */}
-      <StockCheckModal 
-        isOpen={showStockCheckModal} 
-        onClose={() => setShowStockCheckModal(false)} 
-        girvis={girvis} 
-      />
-
       {/* Header Bar */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
@@ -228,7 +219,7 @@ export default function Ledger() {
         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
           <button 
             className="btn btn-secondary" 
-            onClick={() => setShowStockCheckModal(true)}
+            onClick={() => navigate('/stock-check')}
             style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.875rem', borderColor: 'var(--brand-primary)', color: 'var(--brand-primary)', fontWeight: '600' }}
             title="Audit and check physically present shop Girvi stock (excludes repledged bank loans)"
           >
