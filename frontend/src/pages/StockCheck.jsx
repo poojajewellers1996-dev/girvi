@@ -3,7 +3,8 @@ import { api } from '../api/client';
 import { useNavigate } from 'react-router-dom';
 import { 
   PackageCheck, ArrowLeft, Search, CheckCircle, RotateCcw, 
-  ArrowRight, Printer, ShieldAlert, Award, Layers, Loader2 
+  ArrowRight, Printer, ShieldAlert, Award, Layers, Loader2,
+  Clock, Calendar, Filter, Sparkles
 } from 'lucide-react';
 
 export default function StockCheck() {
@@ -16,6 +17,40 @@ export default function StockCheck() {
   const [searchTerm, setSearchTerm] = useState('');
   const [checkedMap, setCheckedMap] = useState({}); // { [girviId]: true }
   const [scanMessage, setScanMessage] = useState(null);
+  const [justCheckedId, setJustCheckedId] = useState(null);
+  const [lastAuditTime, setLastAuditTime] = useState('');
+
+  // Date Range Filters
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
+  const [datePreset, setDatePreset] = useState('ALL');
+
+  // Web Audio API Beep Synthesizer
+  const playCheckBeep = () => {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'sine';
+      // Pleasant high-pitch double chime
+      osc.frequency.setValueAtTime(880, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(1320, ctx.currentTime + 0.08);
+
+      gain.gain.setValueAtTime(0.15, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start();
+      osc.stop(ctx.currentTime + 0.15);
+    } catch (e) {
+      // Audio autoplay policy fallback
+    }
+  };
 
   // Fetch all Girvis on mount
   useEffect(() => {
@@ -34,25 +69,61 @@ export default function StockCheck() {
     }
   };
 
-  // Load saved audit progress from localStorage on mount
+  // Load saved audit progress & last audit timestamp from localStorage
   useEffect(() => {
     try {
-      const saved = localStorage.getItem('girvi_stock_checked_ids');
-      if (saved) {
-        setCheckedMap(JSON.parse(saved));
+      const savedMap = localStorage.getItem('girvi_stock_checked_ids');
+      if (savedMap) {
+        setCheckedMap(JSON.parse(savedMap));
+      }
+      const savedTime = localStorage.getItem('girvi_stock_last_audit_time');
+      if (savedTime) {
+        setLastAuditTime(savedTime);
       }
     } catch (e) {
       console.error('Failed to load saved stock audit state', e);
     }
   }, []);
 
-  // Save progress to localStorage whenever checkedMap changes
+  // Save progress to localStorage
   const updateCheckedMap = (newMap) => {
     setCheckedMap(newMap);
     try {
       localStorage.setItem('girvi_stock_checked_ids', JSON.stringify(newMap));
     } catch (e) {
       console.error('Failed to save stock audit state', e);
+    }
+  };
+
+  // Update Last Audit Timestamp
+  const updateAuditTimestamp = () => {
+    const formatted = new Date().toLocaleString('en-IN', {
+      day: '2-digit', month: 'short', year: 'numeric',
+      hour: '2-digit', minute: '2-digit', hour12: true
+    });
+    setLastAuditTime(formatted);
+    try {
+      localStorage.setItem('girvi_stock_last_audit_time', formatted);
+    } catch (e) {}
+  };
+
+  // Date Preset Handler
+  const handleSetPreset = (preset) => {
+    setDatePreset(preset);
+    const now = new Date();
+    if (preset === 'ALL') {
+      setFromDate('');
+      setToDate('');
+    } else if (preset === 'THIS_MONTH') {
+      const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+      const todayStr = now.toISOString().split('T')[0];
+      setFromDate(firstDay);
+      setToDate(todayStr);
+    } else if (preset === 'LAST_MONTH') {
+      const firstDay = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString().split('T')[0];
+      const lastDay = new Date(now.getFullYear(), now.getMonth(), 0).toISOString().split('T')[0];
+      setFromDate(firstDay);
+      setToDate(lastDay);
     }
   };
 
@@ -95,17 +166,34 @@ export default function StockCheck() {
     return { pendingItems: pending, checkedItems: checked };
   }, [currentMetalGirvis, checkedMap]);
 
-  // Filter Left side by search term
+  // 4. Filter Pending Items by Search Term & Date Range
   const filteredPendingItems = useMemo(() => {
-    if (!searchTerm.trim()) return pendingItems;
-    const term = searchTerm.toLowerCase().trim();
     return pendingItems.filter(g => {
-      const pMatch = g.pledge_no && g.pledge_no.toLowerCase().includes(term);
-      const cMatch = g.customer_name && g.customer_name.toLowerCase().includes(term);
-      const aMatch = g.articles && g.articles.some(a => a.name && a.name.toLowerCase().includes(term));
-      return pMatch || cMatch || aMatch;
+      // Search text match
+      if (searchTerm.trim()) {
+        const term = searchTerm.toLowerCase().trim();
+        const pMatch = g.pledge_no && g.pledge_no.toLowerCase().includes(term);
+        const cMatch = g.customer_name && g.customer_name.toLowerCase().includes(term);
+        const aMatch = g.articles && g.articles.some(a => a.name && a.name.toLowerCase().includes(term));
+        if (!pMatch && !cMatch && !aMatch) return false;
+      }
+
+      // Date Range Match
+      if (fromDate) {
+        const pDate = new Date(g.pledge_date);
+        const fDate = new Date(fromDate);
+        if (pDate < fDate) return false;
+      }
+      if (toDate) {
+        const pDate = new Date(g.pledge_date);
+        const tDate = new Date(toDate);
+        tDate.setHours(23, 59, 59, 999);
+        if (pDate > tDate) return false;
+      }
+
+      return true;
     });
-  }, [pendingItems, searchTerm]);
+  }, [pendingItems, searchTerm, fromDate, toDate]);
 
   // Total weight calculations for stats
   const calculateTotalWeight = (items) => {
@@ -121,29 +209,36 @@ export default function StockCheck() {
   const pendingWeight = calculateTotalWeight(pendingItems);
   const progressPercent = totalMetalItemsCount > 0 ? Math.round((checkedItems.length / totalMetalItemsCount) * 100) : 0;
 
-  // Handlers
+  // Handlers with Audio Beep & Flash Effect
   const handleCheck = (girviId) => {
+    playCheckBeep();
+    setJustCheckedId(girviId);
     const updated = { ...checkedMap, [girviId]: true };
     updateCheckedMap(updated);
+    updateAuditTimestamp();
+    setTimeout(() => setJustCheckedId(null), 1200);
   };
 
   const handleUncheck = (girviId) => {
     const updated = { ...checkedMap };
     delete updated[girviId];
     updateCheckedMap(updated);
+    updateAuditTimestamp();
   };
 
   const handleCheckAllCurrent = () => {
-    if (!window.confirm(`Mark all ${pendingItems.length} pending ${metalType.toUpperCase()} items as checked?`)) return;
+    if (!window.confirm(`Mark all ${filteredPendingItems.length} pending ${metalType.toUpperCase()} items as checked?`)) return;
+    playCheckBeep();
     const updated = { ...checkedMap };
-    pendingItems.forEach(g => {
+    filteredPendingItems.forEach(g => {
       updated[g.id] = true;
     });
     updateCheckedMap(updated);
+    updateAuditTimestamp();
   };
 
   const handleResetCurrent = () => {
-    if (!window.confirm(`Reset audit status for ${metalType.toUpperCase()} items?`)) return;
+    if (!window.confirm(`Reset verification status for ${metalType.toUpperCase()} items?`)) return;
     const updated = { ...checkedMap };
     currentMetalGirvis.forEach(g => {
       delete updated[g.id];
@@ -158,13 +253,13 @@ export default function StockCheck() {
       const match = pendingItems.find(g => g.pledge_no && g.pledge_no.toLowerCase() === term);
       if (match) {
         handleCheck(match.id);
-        setScanMessage(`Pledge #${match.pledge_no} marked as checked!`);
+        setScanMessage(`Pledge #${match.pledge_no} verified!`);
         setSearchTerm('');
         setTimeout(() => setScanMessage(null), 3000);
       } else if (filteredPendingItems.length === 1) {
         const singleMatch = filteredPendingItems[0];
         handleCheck(singleMatch.id);
-        setScanMessage(`Pledge #${singleMatch.pledge_no} marked as checked!`);
+        setScanMessage(`Pledge #${singleMatch.pledge_no} verified!`);
         setSearchTerm('');
         setTimeout(() => setScanMessage(null), 3000);
       }
@@ -202,6 +297,7 @@ export default function StockCheck() {
         <body>
           <h2>Girvi Stock Audit Report (${metalType.toUpperCase()})</h2>
           <p>Generated on: ${new Date().toLocaleString('en-IN')}</p>
+          <p>Last Physical Audit Conducted: ${lastAuditTime || 'Not yet conducted'}</p>
           <p>Filter: In-Shop Physical Stock (Excludes Bank Repledged & Released items)</p>
           
           <div class="stats">
@@ -300,7 +396,7 @@ export default function StockCheck() {
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 85px)' }}>
       
       {/* Top Header Bar */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem', flexWrap: 'wrap', gap: '0.75rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <button 
             type="button" 
@@ -317,9 +413,15 @@ export default function StockCheck() {
               <PackageCheck size={26} color="var(--brand-primary, #4f46e5)" />
               In-Shop Physical Girvi Stock Audit
             </h2>
-            <p style={{ color: 'var(--text-muted)', margin: '2px 0 0 0', fontSize: '0.85rem' }}>
-              Physical inventory verification for items in shop safe (excludes repledged bank loans & released items).
-            </p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '3px' }}>
+              <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '0.85rem' }}>
+                Physical inventory verification for items in shop safe (excludes bank loans & released items).
+              </p>
+              {/* Last Audit Timestamp Badge */}
+              <div style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--brand-primary)', display: 'inline-flex', alignItems: 'center', gap: '0.3rem', backgroundColor: 'var(--bg-secondary)', padding: '2px 8px', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+                <Clock size={13} /> Last Audit: <strong>{lastAuditTime || 'Not conducted yet'}</strong>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -382,7 +484,7 @@ export default function StockCheck() {
       </div>
 
       {/* Progress & Summary Bar */}
-      <div className="card" style={{ padding: '0.85rem 1.25rem', marginBottom: '1rem', background: 'var(--bg-surface)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+      <div className="card" style={{ padding: '0.85rem 1.25rem', marginBottom: '0.85rem', background: 'var(--bg-surface)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
           <div>
@@ -435,7 +537,7 @@ export default function StockCheck() {
               type="button" 
               className="btn btn-secondary" 
               onClick={handleCheckAllCurrent} 
-              disabled={pendingItems.length === 0}
+              disabled={filteredPendingItems.length === 0}
               style={{ padding: '0.35rem 0.65rem', fontSize: '0.8rem' }}
               title="Mark all current pending items as checked"
             >
@@ -462,20 +564,20 @@ export default function StockCheck() {
         {/* LEFT SIDE: PENDING / ALL SHOP ITEMS */}
         <div style={{ borderRight: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-primary)', overflow: 'hidden' }}>
           
-          {/* Left Header & Search */}
-          <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid var(--border-color)', backgroundColor: 'var(--bg-surface)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-              <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+          {/* Left Header & Filters */}
+          <div style={{ padding: '0.85rem 1.1rem', borderBottom: '1px solid var(--border-color)', backgroundColor: 'var(--bg-surface)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
+              <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                 <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#dc2626', display: 'inline-block' }}></span>
-                Pending Shop Stock ({pendingItems.length})
+                Pending Shop Stock ({filteredPendingItems.length})
               </h3>
-              <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-muted)' }}>
-                Total: {pendingWeight.toFixed(2)} g
+              <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)' }}>
+                Total: {calculateTotalWeight(filteredPendingItems).toFixed(2)} g
               </span>
             </div>
 
-            {/* Quick Scan Input */}
-            <div style={{ position: 'relative' }}>
+            {/* Quick Search & Barcode Scan Input */}
+            <div style={{ position: 'relative', marginBottom: '0.5rem' }}>
               <Search size={16} style={{ position: 'absolute', top: '50%', left: '10px', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
               <input
                 type="text"
@@ -484,33 +586,104 @@ export default function StockCheck() {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyDown={handleSearchKeyDown}
                 className="input-field"
-                style={{ paddingLeft: '32px', margin: 0, fontSize: '0.875rem' }}
+                style={{ paddingLeft: '32px', margin: 0, fontSize: '0.85rem' }}
               />
             </div>
 
+            {/* Date Range Filter Controls */}
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap', fontSize: '0.78rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                <Calendar size={13} /> Pledge Date:
+              </div>
+
+              {/* Date Presets */}
+              <div style={{ display: 'flex', gap: '3px' }}>
+                <button 
+                  type="button" 
+                  onClick={() => handleSetPreset('ALL')}
+                  style={{
+                    padding: '2px 8px', borderRadius: '4px', border: '1px solid var(--border-color)',
+                    fontSize: '0.75rem', cursor: 'pointer', fontWeight: 600,
+                    backgroundColor: datePreset === 'ALL' ? 'var(--brand-primary)' : 'var(--bg-secondary)',
+                    color: datePreset === 'ALL' ? '#ffffff' : 'var(--text-secondary)'
+                  }}
+                >
+                  All Time
+                </button>
+                <button 
+                  type="button" 
+                  onClick={() => handleSetPreset('THIS_MONTH')}
+                  style={{
+                    padding: '2px 8px', borderRadius: '4px', border: '1px solid var(--border-color)',
+                    fontSize: '0.75rem', cursor: 'pointer', fontWeight: 600,
+                    backgroundColor: datePreset === 'THIS_MONTH' ? 'var(--brand-primary)' : 'var(--bg-secondary)',
+                    color: datePreset === 'THIS_MONTH' ? '#ffffff' : 'var(--text-secondary)'
+                  }}
+                >
+                  This Month
+                </button>
+                <button 
+                  type="button" 
+                  onClick={() => handleSetPreset('LAST_MONTH')}
+                  style={{
+                    padding: '2px 8px', borderRadius: '4px', border: '1px solid var(--border-color)',
+                    fontSize: '0.75rem', cursor: 'pointer', fontWeight: 600,
+                    backgroundColor: datePreset === 'LAST_MONTH' ? 'var(--brand-primary)' : 'var(--bg-secondary)',
+                    color: datePreset === 'LAST_MONTH' ? '#ffffff' : 'var(--text-secondary)'
+                  }}
+                >
+                  Last Month
+                </button>
+              </div>
+
+              {/* Manual Date Inputs */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', marginLeft: 'auto' }}>
+                <input 
+                  type="date" 
+                  value={fromDate} 
+                  onChange={(e) => { setFromDate(e.target.value); setDatePreset('CUSTOM'); }}
+                  className="input-field" 
+                  style={{ margin: 0, padding: '2px 6px', fontSize: '0.75rem', width: '120px' }} 
+                  title="From Pledge Date"
+                />
+                <span>to</span>
+                <input 
+                  type="date" 
+                  value={toDate} 
+                  onChange={(e) => { setToDate(e.target.value); setDatePreset('CUSTOM'); }}
+                  className="input-field" 
+                  style={{ margin: 0, padding: '2px 6px', fontSize: '0.75rem', width: '120px' }} 
+                  title="To Pledge Date"
+                />
+              </div>
+            </div>
+
             {scanMessage && (
-              <div style={{ marginTop: '0.5rem', fontSize: '0.85rem', fontWeight: 700, color: '#16a34a', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                <CheckCircle size={15} /> {scanMessage}
+              <div style={{ marginTop: '0.4rem', fontSize: '0.8rem', fontWeight: 700, color: '#16a34a', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                <Sparkles size={14} /> {scanMessage}
               </div>
             )}
           </div>
 
           {/* Left Scrollable List */}
-          <div style={{ flex: 1, overflowY: 'auto', padding: '1rem' }}>
+          <div style={{ flex: 1, overflowY: 'auto', padding: '0.85rem' }}>
             {filteredPendingItems.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '4rem 1rem', color: 'var(--text-muted)' }}>
+              <div style={{ textAlign: 'center', padding: '3.5rem 1rem', color: 'var(--text-muted)' }}>
                 {pendingItems.length === 0 ? (
                   <div>
-                    <CheckCircle size={48} color="#16a34a" style={{ margin: '0 auto 0.75rem auto', display: 'block' }} />
-                    <p style={{ fontWeight: 800, color: '#16a34a', fontSize: '1.1rem', margin: '0 0 4px 0' }}>All {metalType.toUpperCase()} Stock Verified!</p>
-                    <p style={{ margin: 0, fontSize: '0.875rem' }}>Every non-repledged item in your shop has been checked.</p>
+                    <CheckCircle size={44} color="#16a34a" style={{ margin: '0 auto 0.75rem auto', display: 'block' }} />
+                    <p style={{ fontWeight: 800, color: '#16a34a', fontSize: '1.05rem', margin: '0 0 4px 0' }}>All {metalType.toUpperCase()} Stock Verified!</p>
+                    <p style={{ margin: 0, fontSize: '0.85rem' }}>Every non-repledged item in your shop has been checked.</p>
                   </div>
                 ) : (
-                  'No pending items match your search filter.'
+                  <div>
+                    <Filter size={32} style={{ margin: '0 auto 0.5rem auto', opacity: 0.5, display: 'block' }} />
+                    <p style={{ margin: 0, fontSize: '0.875rem' }}>No pending items match your date or search filters.</p>
+                  </div>
                 )}
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
                 {filteredPendingItems.map((girvi) => {
                   const itemWt = girvi.articles?.reduce((sum, a) => sum + (Number(a.net_wt) || 0), 0) || 0;
                   return (
@@ -518,8 +691,8 @@ export default function StockCheck() {
                       key={girvi.id}
                       onClick={() => handleCheck(girvi.id)}
                       style={{
-                        padding: '0.9rem 1.1rem',
-                        borderRadius: '12px',
+                        padding: '0.85rem 1rem',
+                        borderRadius: '10px',
                         border: '1px solid var(--border-color)',
                         backgroundColor: 'var(--bg-surface)',
                         cursor: 'pointer',
@@ -534,29 +707,34 @@ export default function StockCheck() {
                       onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--border-color)'}
                     >
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '4px' }}>
-                          <span style={{ fontWeight: 800, fontSize: '1.05rem', color: 'var(--text-primary)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '3px' }}>
+                          <span style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--text-primary)' }}>
                             #{girvi.pledge_no}
                           </span>
-                          <span style={{ fontSize: '0.75rem', padding: '2px 8px', borderRadius: '4px', background: 'rgba(239, 68, 68, 0.1)', color: '#dc2626', fontWeight: 700 }}>
+                          <span style={{ fontSize: '0.72rem', padding: '2px 6px', borderRadius: '4px', background: 'rgba(239, 68, 68, 0.1)', color: '#dc2626', fontWeight: 700 }}>
                             Unchecked
                           </span>
+                          {girvi.pledge_date && (
+                            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginLeft: 'auto' }}>
+                              {new Date(girvi.pledge_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                            </span>
+                          )}
                         </div>
 
-                        <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                           {girvi.customer_name}
                         </div>
 
-                        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                        <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '2px' }}>
                           {girvi.articles?.map(a => a.name).join(', ') || 'Item'}
                         </div>
                       </div>
 
                       <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                        <div style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--brand-primary)' }}>
+                        <div style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--brand-primary)' }}>
                           {itemWt.toFixed(2)} g
                         </div>
-                        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                        <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
                           ₹{Number(girvi.loan_amount || 0).toLocaleString('en-IN')}
                         </div>
                         
@@ -567,7 +745,7 @@ export default function StockCheck() {
                             e.stopPropagation();
                             handleCheck(girvi.id);
                           }}
-                          style={{ marginTop: '6px', padding: '0.25rem 0.65rem', fontSize: '0.78rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
+                          style={{ marginTop: '5px', padding: '0.2rem 0.6rem', fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
                         >
                           Mark Checked <ArrowRight size={13} />
                         </button>
@@ -585,13 +763,13 @@ export default function StockCheck() {
         <div style={{ display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-primary)', overflow: 'hidden' }}>
           
           {/* Right Header */}
-          <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid var(--border-color)', backgroundColor: 'rgba(22, 163, 74, 0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ padding: '0.85rem 1.1rem', borderBottom: '1px solid var(--border-color)', backgroundColor: 'rgba(22, 163, 74, 0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: '#16a34a', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: '#16a34a', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                 <CheckCircle size={18} color="#16a34a" />
                 Marked as Girvi Checked ({checkedItems.length})
               </h3>
-              <p style={{ margin: '2px 0 0 0', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+              <p style={{ margin: '2px 0 0 0', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
                 Physically verified items in shop safe
               </p>
             </div>
@@ -603,56 +781,64 @@ export default function StockCheck() {
           </div>
 
           {/* Right Scrollable List */}
-          <div style={{ flex: 1, overflowY: 'auto', padding: '1rem' }}>
+          <div style={{ flex: 1, overflowY: 'auto', padding: '0.85rem' }}>
             {checkedItems.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '4rem 1rem', color: 'var(--text-muted)' }}>
+              <div style={{ textAlign: 'center', padding: '3.5rem 1rem', color: 'var(--text-muted)' }}>
                 <ShieldAlert size={40} color="var(--text-muted)" style={{ margin: '0 auto 0.75rem auto', display: 'block', opacity: 0.5 }} />
                 <p style={{ fontWeight: 700, margin: '0 0 4px 0', fontSize: '1rem' }}>No Items Verified Yet</p>
                 <p style={{ margin: 0, fontSize: '0.85rem' }}>Click "Mark Checked" on items from the left side as you physically inspect them.</p>
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
                 {checkedItems.map((girvi) => {
                   const itemWt = girvi.articles?.reduce((sum, a) => sum + (Number(a.net_wt) || 0), 0) || 0;
+                  const isJustChecked = girvi.id === justCheckedId;
+
                   return (
                     <div 
                       key={girvi.id}
                       style={{
-                        padding: '0.9rem 1.1rem',
-                        borderRadius: '12px',
-                        border: '1px solid rgba(22, 163, 74, 0.3)',
-                        backgroundColor: 'var(--bg-surface)',
+                        padding: '0.85rem 1rem',
+                        borderRadius: '10px',
+                        border: isJustChecked ? '2px solid #16a34a' : '1px solid rgba(22, 163, 74, 0.3)',
+                        backgroundColor: isJustChecked ? 'rgba(22, 163, 74, 0.12)' : 'var(--bg-surface)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
                         gap: '1rem',
-                        boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                        transition: 'all 0.3s ease'
                       }}
                     >
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '4px' }}>
-                          <span style={{ fontWeight: 800, fontSize: '1.05rem', color: 'var(--text-primary)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '3px' }}>
+                          <span style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--text-primary)' }}>
                             #{girvi.pledge_no}
                           </span>
-                          <span style={{ fontSize: '0.75rem', padding: '2px 8px', borderRadius: '4px', background: 'rgba(22, 163, 74, 0.15)', color: '#16a34a', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
+                          <span style={{ fontSize: '0.72rem', padding: '2px 6px', borderRadius: '4px', background: 'rgba(22, 163, 74, 0.15)', color: '#16a34a', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
                             <CheckCircle size={12} /> Verified
                           </span>
+                          {isJustChecked && (
+                            <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#16a34a', display: 'inline-flex', alignItems: 'center', gap: '0.2rem', animation: 'fadeIn 0.2s' }}>
+                              <Sparkles size={12} /> Just Verified!
+                            </span>
+                          )}
                         </div>
 
-                        <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                           {girvi.customer_name}
                         </div>
 
-                        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                        <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '2px' }}>
                           {girvi.articles?.map(a => a.name).join(', ') || 'Item'}
                         </div>
                       </div>
 
                       <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                        <div style={{ fontWeight: 800, fontSize: '1rem', color: '#16a34a' }}>
+                        <div style={{ fontWeight: 800, fontSize: '0.95rem', color: '#16a34a' }}>
                           {itemWt.toFixed(2)} g
                         </div>
-                        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                        <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
                           ₹{Number(girvi.loan_amount || 0).toLocaleString('en-IN')}
                         </div>
 
@@ -660,7 +846,7 @@ export default function StockCheck() {
                           type="button" 
                           className="btn btn-secondary"
                           onClick={() => handleUncheck(girvi.id)}
-                          style={{ marginTop: '6px', padding: '0.25rem 0.65rem', fontSize: '0.78rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem', color: 'var(--text-muted)' }}
+                          style={{ marginTop: '5px', padding: '0.2rem 0.6rem', fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem', color: 'var(--text-muted)' }}
                           title="Move item back to unverified list"
                         >
                           <ArrowLeft size={13} /> Move Back
