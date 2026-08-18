@@ -165,14 +165,21 @@ class GirviSummary(BaseModel):
     present_value: Optional[float] = None
     model_config = {"from_attributes": True}
 
+class RepledgeSummary(BaseModel):
+    id: int
+    loan_number: str
+    bank_name: str
+    repledger_name: Optional[str] = None
+    amount: Optional[float] = None
+    status: Optional[str] = "Active"
+    model_config = {"from_attributes": True}
+
 class RepledgeRead(RepledgeCreate):
     id: int
     created_at: datetime
     girvis: List[GirviSummary] = []
     transactions: List[RepledgeTransactionRead] = []
     model_config = {"from_attributes": True}
-
-
 
 # ─── Girvi Entry ───────────────────────────────────────────────────────────────
 
@@ -212,7 +219,7 @@ class GirviRead(BaseModel):
     monthly_income: Optional[float] = None
     status: Optional[str] = "Active"
     articles: List[ArticleRead] = []
-    repledges: List[RepledgeRead] = []
+    repledges: List[RepledgeSummary] = []
 
     model_config = {"from_attributes": True}
 

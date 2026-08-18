@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { api } from '../api/client';
-import { Loader2, Search, Plus, Eye, Edit, Trash2, Calendar, NotebookTabs, Unlock, Download, Filter, RotateCcw, Image as ImageIcon, ArrowUpDown, ArrowUp, ArrowDown, Landmark, PackageCheck } from 'lucide-react';
+import { Loader2, Search, Plus, Eye, Edit, Trash2, Calendar, NotebookTabs, Unlock, Download, Filter, RotateCcw, Image as ImageIcon, ArrowUpDown, ArrowUp, ArrowDown, Landmark, PackageCheck, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import LedgerModal from '../components/LedgerModal';
 import ReleaseModal from '../components/ReleaseModal';
@@ -28,6 +28,10 @@ export default function Ledger() {
   const [metalFilter, setMetalFilter] = useState('ALL');
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25); // 25, 50, 100, 'ALL'
 
   // Sorting State
   const [sortField, setSortField] = useState('pledge_no'); // 'pledge_no' | 'pledge_date' | 'loan_amount' | 'present_value' | 'customer_name'
@@ -128,6 +132,20 @@ export default function Ledger() {
     if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
     return 0;
   });
+
+  // Reset currentPage on filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter, metalFilter, fromDate, toDate, sortField, sortOrder]);
+
+  const effectivePageSize = pageSize === 'ALL' ? sortedGirvis.length || 1 : Number(pageSize) || 25;
+  const totalPages = Math.max(1, Math.ceil(sortedGirvis.length / effectivePageSize));
+
+  const paginatedGirvis = useMemo(() => {
+    if (pageSize === 'ALL') return sortedGirvis;
+    const startIndex = (currentPage - 1) * effectivePageSize;
+    return sortedGirvis.slice(startIndex, startIndex + effectivePageSize);
+  }, [sortedGirvis, currentPage, pageSize, effectivePageSize]);
 
   const renderSortHeader = (label, field, align = 'left') => {
     const isCurrent = sortField === field;
@@ -376,10 +394,12 @@ export default function Ledger() {
                   </td>
                 </tr>
               ) : (
-                sortedGirvis.map((girvi, index) => (
+                paginatedGirvis.map((girvi, index) => (
 
                   <tr key={girvi.id} style={{ borderBottom: '1px solid var(--border-color)', transition: 'background-color 0.2s' }}>
-                    <td style={{ padding: '1rem', fontWeight: '600', textAlign: 'center', color: 'var(--text-muted)' }}>{index + 1}</td>
+                    <td style={{ padding: '1rem', fontWeight: '600', textAlign: 'center', color: 'var(--text-muted)' }}>
+                      {(pageSize === 'ALL' ? 0 : (currentPage - 1) * effectivePageSize) + index + 1}
+                    </td>
                     <td style={{ padding: '1rem', fontWeight: '600' }}>
                       <div>{girvi.pledge_no}</div>
                       {girvi.repledges && girvi.repledges.length > 0 && (
@@ -428,7 +448,7 @@ export default function Ledger() {
                                 <button
                                   style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--brand-primary)', padding: 0, display: 'inline-flex' }}
                                   onClick={() => setLightbox({ src: art.photo_path, title: `Article: ${art.name}` })}
-                                  title="View Article Photo"
+                                  title="View Item Photo"
                                 >
                                   <ImageIcon size={14} />
                                 </button>
@@ -441,62 +461,47 @@ export default function Ledger() {
                       )}
                     </td>
 
-                    <td style={{ padding: '1rem', whiteSpace: 'nowrap' }}>
+                    {/* Weight Details */}
+                    <td style={{ padding: '1rem', fontSize: '0.85rem' }}>
                       {girvi.articles && girvi.articles.length > 0 ? (
-                        <>
-                          <div style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-primary)' }}>
-                            Net: {girvi.articles.reduce((s, a) => s + (Number(a.net_wt) || 0), 0).toFixed(2)}g
+                        <div>
+                          <div style={{ fontWeight: '600', color: 'var(--text-primary)' }}>
+                            Net: {girvi.articles.reduce((sum, a) => sum + (Number(a.net_wt) || 0), 0).toFixed(2)} g
                           </div>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '1px' }}>
-                            Gross: {girvi.articles.reduce((s, a) => s + (Number(a.gross_wt) || 0), 0).toFixed(2)}g
+                          <div style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>
+                            Gross: {girvi.articles.reduce((sum, a) => sum + (Number(a.gross_wt) || 0), 0).toFixed(2)} g
                           </div>
-                        </>
-                      ) : (
-                        <span style={{ color: 'var(--text-muted)' }}>-</span>
+                        </div>
+                      ) : '-'}
+                    </td>
+
+                    <td style={{ padding: '1rem', whiteSpace: 'nowrap' }}>
+                      <div style={{ fontWeight: '500' }}>
+                        {new Date(girvi.pledge_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                      </div>
+                      {girvi.due_date && (
+                        <div style={{ fontSize: '0.78rem', color: '#ef4444' }}>
+                          Due: {new Date(girvi.due_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                        </div>
                       )}
                     </td>
 
-                    <td style={{ padding: '1rem', whiteSpace: 'nowrap' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.85rem' }}>
-                        <Calendar size={13} color="var(--text-muted)" />
-                        <span style={{ color: 'var(--text-muted)' }}>Pledge:</span> {formatDate(girvi.pledge_date)}
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.85rem', marginTop: '0.25rem' }}>
-                        <Calendar size={13} color="rgb(239, 68, 68)" />
-                        <span style={{ color: 'rgb(239, 68, 68)' }}>Due:</span> {formatDate(girvi.due_date)}
-                      </div>
-                    </td>
-
-                    {/* Bank Re-Pledge Column */}
-                    <td style={{ padding: '1rem', whiteSpace: 'nowrap' }}>
+                    {/* Bank Link Column */}
+                    <td style={{ padding: '1rem' }}>
                       {girvi.repledges && girvi.repledges.length > 0 ? (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                          {girvi.repledges.map(r => (
-                            <span 
-                              key={r.id} 
-                              style={{ 
-                                display: 'inline-flex', 
-                                alignItems: 'center', 
-                                gap: '0.25rem', 
-                                background: 'rgba(79, 70, 229, 0.12)', 
-                                color: 'var(--brand-primary)', 
-                                padding: '0.2rem 0.5rem', 
-                                borderRadius: '6px', 
-                                fontSize: '0.78rem', 
-                                fontWeight: 700 
-                              }}
-                              title={`Bank Loan #${r.loan_number} (${r.repledger_name})`}
-                            >
-                              <Landmark size={12} /> {r.bank_name}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                          {girvi.repledges.map((r, rIdx) => (
+                            <span key={rIdx} style={{ fontSize: '0.78rem', fontWeight: '600', padding: '2px 6px', borderRadius: '4px', background: 'rgba(99, 102, 241, 0.1)', color: 'var(--brand-primary)', width: 'fit-content' }}>
+                              {r.bank_name}: {r.loan_number}
                             </span>
                           ))}
                         </div>
                       ) : (
-                        <span style={{ color: 'var(--text-muted)' }}>-</span>
+                        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Shop Safe</span>
                       )}
                     </td>
-                    
-                    <td style={{ padding: '1rem', whiteSpace: 'nowrap' }}>₹{girvi.present_value?.toLocaleString('en-IN') || 0}</td>
+
+                    <td style={{ padding: '1rem', textAlign: 'right', fontWeight: '500' }}>₹{girvi.present_value?.toLocaleString('en-IN') || 0}</td>
 
                     <td style={{ padding: '1rem', fontWeight: '700', color: 'var(--primary-color)', whiteSpace: 'nowrap' }}>₹{girvi.loan_amount?.toLocaleString('en-IN') || 0}</td>
                     
@@ -572,6 +577,65 @@ export default function Ledger() {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination Footer */}
+        {sortedGirvis.length > 0 && (
+          <div style={{ padding: '0.85rem 1.25rem', borderTop: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', fontSize: '0.875rem' }}>
+            <div style={{ color: 'var(--text-muted)', fontWeight: '500' }}>
+              Showing <strong>{pageSize === 'ALL' ? 1 : (currentPage - 1) * effectivePageSize + 1}</strong> to <strong>{pageSize === 'ALL' ? sortedGirvis.length : Math.min(currentPage * effectivePageSize, sortedGirvis.length)}</strong> of <strong>{sortedGirvis.length}</strong> Girvis
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span style={{ color: 'var(--text-muted)', fontWeight: '500' }}>Rows per page:</span>
+                <select 
+                  className="input-field" 
+                  value={pageSize} 
+                  onChange={(e) => {
+                    setPageSize(e.target.value === 'ALL' ? 'ALL' : Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  style={{ margin: 0, padding: '0.25rem 0.5rem', fontSize: '0.85rem', width: 'auto' }}
+                >
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                  <option value="ALL">All ({sortedGirvis.length})</option>
+                </select>
+              </div>
+
+              {pageSize !== 'ALL' && totalPages > 1 && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <button 
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                    style={{ padding: '0.35rem 0.5rem', display: 'flex', alignItems: 'center' }}
+                    title="Previous Page"
+                  >
+                    <ChevronLeft size={16} />
+                  </button>
+
+                  <span style={{ fontWeight: '600', padding: '0 0.4rem', color: 'var(--text-primary)' }}>
+                    Page {currentPage} of {totalPages}
+                  </span>
+
+                  <button 
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage >= totalPages}
+                    style={{ padding: '0.35rem 0.5rem', display: 'flex', alignItems: 'center' }}
+                    title="Next Page"
+                  >
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Transaction Ledger Modal */}
