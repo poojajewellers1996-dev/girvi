@@ -294,7 +294,7 @@ from .models import LedgerTransaction
 def release_girvi_with_settlement(
     db: Session, 
     girvi_id: int, 
-    interest_amount: float = 0.0, 
+    interest_amount: Optional[float] = 0.0, 
     rate: Optional[float] = None, 
     months: Optional[int] = None, 
     total_amount: Optional[float] = None,

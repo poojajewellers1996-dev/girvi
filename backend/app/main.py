@@ -476,7 +476,7 @@ def release_girvi(
     db: Session = Depends(get_db),
     token: dict = Depends(get_current_user),
 ):
-    interest_amount = release_data.interest_amount if release_data else 0.0
+    interest_amount = float(release_data.interest_amount) if (release_data and release_data.interest_amount is not None) else 0.0
     rate = release_data.rate if release_data else None
     months = release_data.months if release_data else None
     total_amount = release_data.total_amount if release_data else None
