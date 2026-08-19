@@ -196,7 +196,12 @@ export default function Ledger() {
     if (!releaseGirvi) return;
     try {
       setReleaseLoading(true);
-      await api.releaseGirvi(releaseGirvi.id);
+      await api.releaseGirvi(releaseGirvi.id, {
+        rate,
+        months,
+        interest_amount: interest,
+        total_amount: total
+      });
       setReleaseGirvi(null);
       fetchGirvis();
     } catch (err) {

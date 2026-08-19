@@ -94,8 +94,9 @@ export const api = {
   deleteGirvi: (id) => request(`/girvi/${id}`, {
     method: 'DELETE'
   }),
-  releaseGirvi: (id) => request(`/girvi/${id}/release`, {
-    method: 'PATCH'
+  releaseGirvi: (id, data) => request(`/girvi/${id}/release`, {
+    method: 'PATCH',
+    body: JSON.stringify(data || {})
   }),
   partPaymentGirvi: (id, amount) => request(`/girvi/${id}/part-payment`, {
     method: 'PATCH',

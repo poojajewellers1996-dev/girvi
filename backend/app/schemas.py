@@ -225,3 +225,11 @@ class GirviRead(BaseModel):
 
 class PartPaymentRequest(BaseModel):
     amount: float = Field(..., gt=0)
+
+class ReleaseGirviRequest(BaseModel):
+    interest_amount: Optional[float] = 0.0
+    rate: Optional[float] = None
+    months: Optional[int] = None
+    total_amount: Optional[float] = None
+    release_date: Optional[datetime] = None
+    remarks: Optional[str] = None

@@ -291,6 +291,48 @@ def update_girvi_status(db: Session, girvi_id: int, status: str):
 
 from .models import LedgerTransaction
 
+def release_girvi_with_settlement(
+    db: Session, 
+    girvi_id: int, 
+    interest_amount: float = 0.0, 
+    rate: Optional[float] = None, 
+    months: Optional[int] = None, 
+    total_amount: Optional[float] = None,
+    release_date: Optional[datetime.datetime] = None,
+    remarks: Optional[str] = None
+):
+    girvi = get_girvi(db, girvi_id)
+    if not girvi:
+        return None
+    
+    girvi.status = "Released"
+    tx_date = release_date or datetime.datetime.now()
+
+    if interest_amount and interest_amount > 0:
+        int_tx = LedgerTransaction(
+            girvi_id=girvi_id,
+            transaction_type="INTEREST_PAID",
+            amount=float(interest_amount),
+            transaction_date=tx_date,
+            remarks=remarks or f"Interest collected upon release ({months or 1} mos @ {rate or 0}%/mo)"
+        )
+        db.add(int_tx)
+
+    if total_amount and total_amount > 0:
+        prin_amt = float(girvi.loan_amount or 0.0)
+        prin_tx = LedgerTransaction(
+            girvi_id=girvi_id,
+            transaction_type="PRINCIPAL_PAYMENT",
+            amount=prin_amt,
+            transaction_date=tx_date,
+            remarks=f"Principal loan settlement upon release"
+        )
+        db.add(prin_tx)
+
+    db.commit()
+    db.refresh(girvi)
+    return girvi
+
 def part_payment_girvi(db: Session, girvi_id: int, amount: float):
     # Legacy - unused in UI, kept for compatibility if needed.
     girvi = get_girvi(db, girvi_id)

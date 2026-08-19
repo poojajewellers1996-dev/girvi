@@ -383,6 +383,41 @@ def get_girvi_stats(db: Session = Depends(get_db), token: dict = Depends(get_cur
         models.LedgerTransaction.transaction_type == 'INTEREST_PAID'
     ).scalar() or 0.0
 
+    # Auto-backfill interest transactions for released Girvis that don't have explicit INTEREST_PAID rows
+    released_girvis_without_int = db.query(models.Girvi).filter(
+        models.Girvi.status == 'Released'
+    ).all()
+
+    for r_girvi in released_girvis_without_int:
+        has_int_tx = any(t.transaction_type == 'INTEREST_PAID' for t in r_girvi.transactions)
+        if not has_int_tx:
+            # Estimate duration in months (min 1 month)
+            p_date = r_girvi.pledge_date or datetime.datetime.now()
+            today = datetime.datetime.now()
+            m_diff = (today.year - p_date.year) * 12 + (today.month - p_date.month)
+            if today.day > p_date.day:
+                m_diff += 1
+            m_diff = max(1, m_diff)
+
+            # Determine rate (10% Silver, 3% Gold)
+            art_names = ' '.join([(a.name or '').lower() for a in r_girvi.articles])
+            rate = 10.0 if 'silver' in art_names else 3.0
+            loan_amt = float(r_girvi.loan_amount or 0.0)
+            est_interest = round((loan_amt * rate * m_diff) / 100.0)
+
+            if est_interest > 0:
+                int_tx = models.LedgerTransaction(
+                    girvi_id=r_girvi.id,
+                    transaction_type='INTEREST_PAID',
+                    amount=float(est_interest),
+                    transaction_date=p_date,
+                    remarks=f"Auto-backfilled interest for released Girvi #{r_girvi.pledge_no} ({m_diff} mos @ {rate}%)"
+                )
+                db.add(int_tx)
+                total_interest_collected += est_interest
+
+    db.commit()
+
     return {
         "total_girvis": total_girvis,
         "active_girvis": active_girvis,
@@ -437,13 +472,30 @@ def delete_girvi(
 @app.patch("/girvi/{girvi_id}/release", response_model=schemas.GirviRead)
 def release_girvi(
     girvi_id: int,
+    release_data: Optional[schemas.ReleaseGirviRequest] = None,
     db: Session = Depends(get_db),
     token: dict = Depends(get_current_user),
 ):
-    released = crud.update_girvi_status(db, girvi_id, "Released")
+    interest_amount = release_data.interest_amount if release_data else 0.0
+    rate = release_data.rate if release_data else None
+    months = release_data.months if release_data else None
+    total_amount = release_data.total_amount if release_data else None
+    release_date = release_data.release_date if release_data else None
+    remarks = release_data.remarks if release_data else None
+
+    released = crud.release_girvi_with_settlement(
+        db,
+        girvi_id=girvi_id,
+        interest_amount=interest_amount,
+        rate=rate,
+        months=months,
+        total_amount=total_amount,
+        release_date=release_date,
+        remarks=remarks
+    )
     if not released:
         raise HTTPException(status_code=404, detail="Girvi not found")
-    log_system_action(db, "GIRVI_RELEASE", f"Released Girvi #{released.pledge_no}", module="GIRVI")
+    log_system_action(db, "GIRVI_RELEASE", f"Released Girvi #{released.pledge_no} (Interest: ₹{interest_amount})", module="GIRVI")
     return schemas.GirviRead.model_validate(released)
 
 @app.patch("/girvi/{girvi_id}/part-payment", response_model=schemas.GirviRead)
