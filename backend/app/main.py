@@ -265,6 +265,7 @@ def list_girvis(
     return [schemas.GirviRead.model_validate(g) for g in crud.list_girvis(db, skip, limit)]
 
 @app.get("/girvi/released")
+@app.get("/girvi/released/")
 def get_released_girvis(
     db: Session = Depends(get_db),
     token: dict = Depends(get_current_user),
@@ -427,11 +428,13 @@ def get_girvi_stats(db: Session = Depends(get_db), token: dict = Depends(get_cur
 
 @app.get("/girvi/{girvi_id}", response_model=schemas.GirviRead)
 def get_girvi(
-    girvi_id: int,
+    girvi_id: str,
     db: Session = Depends(get_db),
     token: dict = Depends(get_current_user),
 ):
-    g = crud.get_girvi(db, girvi_id)
+    if not girvi_id.isdigit():
+        raise HTTPException(status_code=404, detail="Girvi not found")
+    g = crud.get_girvi(db, int(girvi_id))
     if not g:
         raise HTTPException(status_code=404, detail="Girvi not found")
     return schemas.GirviRead.model_validate(g)
