@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { 
   PackageCheck, ArrowLeft, Search, CheckCircle, RotateCcw, 
   ArrowRight, Printer, ShieldAlert, Award, Layers, Loader2,
-  Clock, Calendar, Filter, Sparkles
+  Clock, Calendar, Filter, Sparkles, Hash
 } from 'lucide-react';
 
 export default function StockCheck() {
@@ -20,10 +20,16 @@ export default function StockCheck() {
   const [justCheckedId, setJustCheckedId] = useState(null);
   const [lastAuditTime, setLastAuditTime] = useState('');
 
-  // Date Range Filters
-  const [fromDate, setFromDate] = useState('');
-  const [toDate, setToDate] = useState('');
-  const [datePreset, setDatePreset] = useState('ALL');
+  // Pledge Range Filters
+  const [fromPledgeNo, setFromPledgeNo] = useState('');
+  const [toPledgeNo, setToPledgeNo] = useState('');
+
+  // Helper to extract numeric pledge number for range filtering
+  const extractPledgeNum = (val) => {
+    if (!val) return null;
+    const match = val.toString().trim().match(/\d+/);
+    return match ? parseInt(match[0], 10) : null;
+  };
 
   // Web Audio API Beep Synthesizer
   const playCheckBeep = () => {
@@ -107,24 +113,10 @@ export default function StockCheck() {
     } catch (e) {}
   };
 
-  // Date Preset Handler
-  const handleSetPreset = (preset) => {
-    setDatePreset(preset);
-    const now = new Date();
-    if (preset === 'ALL') {
-      setFromDate('');
-      setToDate('');
-    } else if (preset === 'THIS_MONTH') {
-      const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-      const todayStr = now.toISOString().split('T')[0];
-      setFromDate(firstDay);
-      setToDate(todayStr);
-    } else if (preset === 'LAST_MONTH') {
-      const firstDay = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString().split('T')[0];
-      const lastDay = new Date(now.getFullYear(), now.getMonth(), 0).toISOString().split('T')[0];
-      setFromDate(firstDay);
-      setToDate(lastDay);
-    }
+  // Clear Pledge Range Filter
+  const handleClearPledgeRange = () => {
+    setFromPledgeNo('');
+    setToPledgeNo('');
   };
 
   // Helper to determine if a Girvi is silver vs gold
@@ -166,7 +158,7 @@ export default function StockCheck() {
     return { pendingItems: pending, checkedItems: checked };
   }, [currentMetalGirvis, checkedMap]);
 
-  // 4. Filter Pending Items by Search Term & Date Range
+  // 4. Filter Pending Items by Search Term & Pledge No Range
   const filteredPendingItems = useMemo(() => {
     return pendingItems.filter(g => {
       // Search text match
@@ -178,22 +170,32 @@ export default function StockCheck() {
         if (!pMatch && !cMatch && !aMatch) return false;
       }
 
-      // Date Range Match
-      if (fromDate) {
-        const pDate = new Date(g.pledge_date);
-        const fDate = new Date(fromDate);
-        if (pDate < fDate) return false;
-      }
-      if (toDate) {
-        const pDate = new Date(g.pledge_date);
-        const tDate = new Date(toDate);
-        tDate.setHours(23, 59, 59, 999);
-        if (pDate > tDate) return false;
+      // Pledge Number Range Match
+      if (fromPledgeNo.trim() || toPledgeNo.trim()) {
+        const gNum = extractPledgeNum(g.pledge_no);
+        const fromNum = extractPledgeNum(fromPledgeNo);
+        const toNum = extractPledgeNum(toPledgeNo);
+
+        if (fromPledgeNo.trim()) {
+          if (gNum !== null && fromNum !== null) {
+            if (gNum < fromNum) return false;
+          } else if (g.pledge_no) {
+            if (g.pledge_no.toLowerCase() < fromPledgeNo.trim().toLowerCase()) return false;
+          }
+        }
+
+        if (toPledgeNo.trim()) {
+          if (gNum !== null && toNum !== null) {
+            if (gNum > toNum) return false;
+          } else if (g.pledge_no) {
+            if (g.pledge_no.toLowerCase() > toPledgeNo.trim().toLowerCase()) return false;
+          }
+        }
       }
 
       return true;
     });
-  }, [pendingItems, searchTerm, fromDate, toDate]);
+  }, [pendingItems, searchTerm, fromPledgeNo, toPledgeNo]);
 
   // Total weight calculations for stats
   const calculateTotalWeight = (items) => {
@@ -590,71 +592,51 @@ export default function StockCheck() {
               />
             </div>
 
-            {/* Date Range Filter Controls */}
+            {/* Pledge Range Filter Controls */}
             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap', fontSize: '0.78rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', color: 'var(--text-muted)', fontWeight: 600 }}>
-                <Calendar size={13} /> Pledge Date:
+                <Hash size={13} /> Pledge No Range:
               </div>
 
-              {/* Date Presets */}
-              <div style={{ display: 'flex', gap: '3px' }}>
-                <button 
-                  type="button" 
-                  onClick={() => handleSetPreset('ALL')}
-                  style={{
-                    padding: '2px 8px', borderRadius: '4px', border: '1px solid var(--border-color)',
-                    fontSize: '0.75rem', cursor: 'pointer', fontWeight: 600,
-                    backgroundColor: datePreset === 'ALL' ? 'var(--brand-primary)' : 'var(--bg-secondary)',
-                    color: datePreset === 'ALL' ? '#ffffff' : 'var(--text-secondary)'
-                  }}
-                >
-                  All Time
-                </button>
-                <button 
-                  type="button" 
-                  onClick={() => handleSetPreset('THIS_MONTH')}
-                  style={{
-                    padding: '2px 8px', borderRadius: '4px', border: '1px solid var(--border-color)',
-                    fontSize: '0.75rem', cursor: 'pointer', fontWeight: 600,
-                    backgroundColor: datePreset === 'THIS_MONTH' ? 'var(--brand-primary)' : 'var(--bg-secondary)',
-                    color: datePreset === 'THIS_MONTH' ? '#ffffff' : 'var(--text-secondary)'
-                  }}
-                >
-                  This Month
-                </button>
-                <button 
-                  type="button" 
-                  onClick={() => handleSetPreset('LAST_MONTH')}
-                  style={{
-                    padding: '2px 8px', borderRadius: '4px', border: '1px solid var(--border-color)',
-                    fontSize: '0.75rem', cursor: 'pointer', fontWeight: 600,
-                    backgroundColor: datePreset === 'LAST_MONTH' ? 'var(--brand-primary)' : 'var(--bg-secondary)',
-                    color: datePreset === 'LAST_MONTH' ? '#ffffff' : 'var(--text-secondary)'
-                  }}
-                >
-                  Last Month
-                </button>
-              </div>
-
-              {/* Manual Date Inputs */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', marginLeft: 'auto' }}>
+              {/* Range Inputs */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
                 <input 
-                  type="date" 
-                  value={fromDate} 
-                  onChange={(e) => { setFromDate(e.target.value); setDatePreset('CUSTOM'); }}
+                  type="text" 
+                  placeholder="From (e.g. 2000)"
+                  value={fromPledgeNo} 
+                  onChange={(e) => setFromPledgeNo(e.target.value)}
                   className="input-field" 
-                  style={{ margin: 0, padding: '2px 6px', fontSize: '0.75rem', width: '120px' }} 
-                  title="From Pledge Date"
+                  style={{ margin: 0, padding: '3px 8px', fontSize: '0.78rem', width: '130px' }} 
+                  title="From Pledge Number"
                 />
-                <span>to</span>
+                <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>to</span>
                 <input 
-                  type="date" 
-                  value={toDate} 
-                  onChange={(e) => { setToDate(e.target.value); setDatePreset('CUSTOM'); }}
+                  type="text" 
+                  placeholder="To (e.g. 2800)"
+                  value={toPledgeNo} 
+                  onChange={(e) => setToPledgeNo(e.target.value)}
                   className="input-field" 
-                  style={{ margin: 0, padding: '2px 6px', fontSize: '0.75rem', width: '120px' }} 
-                  title="To Pledge Date"
+                  style={{ margin: 0, padding: '3px 8px', fontSize: '0.78rem', width: '130px' }} 
+                  title="To Pledge Number"
                 />
+                {(fromPledgeNo || toPledgeNo) ? (
+                  <button 
+                    type="button" 
+                    onClick={handleClearPledgeRange}
+                    style={{
+                      padding: '2px 8px', borderRadius: '4px', border: '1px solid var(--border-color)',
+                      fontSize: '0.75rem', cursor: 'pointer', fontWeight: 600,
+                      backgroundColor: '#ef4444', color: '#ffffff'
+                    }}
+                    title="Clear pledge range filter"
+                  >
+                    Clear Filter
+                  </button>
+                ) : (
+                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                    (showing all pledges)
+                  </span>
+                )}
               </div>
             </div>
 
