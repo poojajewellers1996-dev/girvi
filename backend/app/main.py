@@ -383,41 +383,6 @@ def get_girvi_stats(db: Session = Depends(get_db), token: dict = Depends(get_cur
         models.LedgerTransaction.transaction_type == 'INTEREST_PAID'
     ).scalar() or 0.0
 
-    # Auto-backfill interest transactions for released Girvis that don't have explicit INTEREST_PAID rows
-    released_girvis_without_int = db.query(models.Girvi).filter(
-        models.Girvi.status == 'Released'
-    ).all()
-
-    for r_girvi in released_girvis_without_int:
-        has_int_tx = any(t.transaction_type == 'INTEREST_PAID' for t in r_girvi.transactions)
-        if not has_int_tx:
-            # Estimate duration in months (min 1 month)
-            p_date = r_girvi.pledge_date or datetime.datetime.now()
-            today = datetime.datetime.now()
-            m_diff = (today.year - p_date.year) * 12 + (today.month - p_date.month)
-            if today.day > p_date.day:
-                m_diff += 1
-            m_diff = max(1, m_diff)
-
-            # Determine rate (10% Silver, 3% Gold)
-            art_names = ' '.join([(a.name or '').lower() for a in r_girvi.articles])
-            rate = 10.0 if 'silver' in art_names else 3.0
-            loan_amt = float(r_girvi.loan_amount or 0.0)
-            est_interest = round((loan_amt * rate * m_diff) / 100.0)
-
-            if est_interest > 0:
-                int_tx = models.LedgerTransaction(
-                    girvi_id=r_girvi.id,
-                    transaction_type='INTEREST_PAID',
-                    amount=float(est_interest),
-                    transaction_date=p_date,
-                    remarks=f"Auto-backfilled interest for released Girvi #{r_girvi.pledge_no} ({m_diff} mos @ {rate}%)"
-                )
-                db.add(int_tx)
-                total_interest_collected += est_interest
-
-    db.commit()
-
     return {
         "total_girvis": total_girvis,
         "active_girvis": active_girvis,
