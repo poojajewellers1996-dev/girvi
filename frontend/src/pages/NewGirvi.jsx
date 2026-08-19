@@ -296,16 +296,10 @@ export default function NewGirvi() {
     setError(null);
 
     try {
-      // Calculate total present_value and loan_amount if not set manually
-      let totalPresentValue = girviData.present_value;
-      let totalLoanAmount = girviData.loan_amount;
-
-      if (!totalPresentValue) {
-        totalPresentValue = articles.reduce((sum, art) => sum + (Number(art.present_value) || 0), 0);
-      }
-      if (!totalLoanAmount) {
-        totalLoanAmount = articles.reduce((sum, art) => sum + (Number(art.loan_amount) || 0), 0);
-      }
+      // Always calculate total present_value, loan_amount, and loan_amount_words from articles
+      const totalPresentValue = articles.reduce((sum, art) => sum + (Number(art.present_value) || 0), 0);
+      const totalLoanAmount = articles.reduce((sum, art) => sum + (Number(art.loan_amount) || 0), 0);
+      const totalLoanAmountWords = numberToWords(totalLoanAmount);
 
       const payload = {
         ...girviData,
@@ -313,6 +307,7 @@ export default function NewGirvi() {
         due_date: toISOAtNoon(girviData.due_date),
         present_value: totalPresentValue,
         loan_amount: totalLoanAmount,
+        loan_amount_words: totalLoanAmountWords,
         mobile_number: girviData.mobile_number ? (girviData.mobile_number.startsWith('+') ? girviData.mobile_number : `+91${girviData.mobile_number}`) : null,
         articles: articles.map(art => ({
           ...art,
@@ -322,14 +317,9 @@ export default function NewGirvi() {
           net_wt: parseFloat(art.net_wt) || 0,
           present_value: parseFloat(art.present_value) || 0,
           loan_amount: parseFloat(art.loan_amount) || 0,
-          loan_amount_words: art.loan_amount_words || 'Zero'
+          loan_amount_words: art.loan_amount_words || numberToWords(parseFloat(art.loan_amount) || 0)
         }))
       };
-
-
-      if (!payload.loan_amount_words) {
-         payload.loan_amount_words = 'Zero';
-      }
 
       if (isRepledged) {
         payload.repledge_ids = repledgeEntries.filter(r => r.type === 'link' && r.linked_id).map(r => r.linked_id);
