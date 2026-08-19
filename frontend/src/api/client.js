@@ -82,6 +82,7 @@ export const api = {
     body: JSON.stringify(data)
   }),
   getGirvis: (skip = 0, limit = null) => request(limit ? `/girvi?skip=${skip}&limit=${limit}` : `/girvi?skip=${skip}`),
+  getReleasedGirvis: () => request('/girvi/released'),
   getGirviById: (id) => request(`/girvi/${id}`),
   createGirvi: (data) => request('/girvi', {
     method: 'POST',

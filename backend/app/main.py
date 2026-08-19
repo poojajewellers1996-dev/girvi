@@ -263,6 +263,33 @@ def list_girvis(
     token: dict = Depends(get_current_user),
 ):
     return [schemas.GirviRead.model_validate(g) for g in crud.list_girvis(db, skip, limit)]
+
+@app.get("/girvi/released")
+def get_released_girvis(
+    db: Session = Depends(get_db),
+    token: dict = Depends(get_current_user),
+):
+    released_items = db.query(models.Girvi).filter(models.Girvi.status == "Released").order_by(models.Girvi.id.desc()).all()
+    
+    result = []
+    for g in released_items:
+        int_txs = [t for t in g.transactions if t.transaction_type == 'INTEREST_PAID']
+        interest_amt = sum(t.amount for t in int_txs) if int_txs else 0.0
+
+        rel_date = int_txs[-1].transaction_date if int_txs else g.pledge_date
+        remarks_str = int_txs[-1].remarks if int_txs and int_txs[-1].remarks else "Released"
+
+        loan_amt = float(g.loan_amount or 0.0)
+        tot_collected = loan_amt + interest_amt
+
+        item_dict = schemas.GirviRead.model_validate(g).model_dump()
+        item_dict['interest_collected'] = interest_amt
+        item_dict['total_collected'] = tot_collected
+        item_dict['release_date'] = rel_date
+        item_dict['remarks'] = remarks_str
+        result.append(item_dict)
+
+    return result
 @app.get("/repledge", response_model=List[schemas.RepledgeRead])
 def list_repledges(
     db: Session = Depends(get_db),

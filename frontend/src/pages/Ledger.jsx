@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { api } from '../api/client';
-import { Loader2, Search, Plus, Eye, Edit, Trash2, Calendar, NotebookTabs, Unlock, Download, Filter, RotateCcw, Image as ImageIcon, ArrowUpDown, ArrowUp, ArrowDown, Landmark, PackageCheck, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Loader2, Search, Plus, Eye, Edit, Trash2, Calendar, NotebookTabs, Unlock, Download, Filter, RotateCcw, Image as ImageIcon, ArrowUpDown, ArrowUp, ArrowDown, Landmark, PackageCheck, ChevronLeft, ChevronRight, CheckCircle2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import LedgerModal from '../components/LedgerModal';
 import ReleaseModal from '../components/ReleaseModal';
@@ -240,6 +240,14 @@ export default function Ledger() {
         </div>
         
         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          <button 
+            className="btn btn-secondary" 
+            onClick={() => navigate('/release-ledger')}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.875rem', borderColor: '#8b5cf6', color: '#8b5cf6', fontWeight: '600' }}
+            title="View complete ledger of all settled & released pawn pledges"
+          >
+            <CheckCircle2 size={18} /> Release Ledger
+          </button>
           <button 
             className="btn btn-secondary" 
             onClick={() => navigate('/stock-check')}
