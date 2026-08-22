@@ -61,7 +61,8 @@ export default function ReleaseModal({ girvi, onClose, onConfirm, loading }) {
       rate: Number(rate),
       months,
       interest: Number(interestAmount),
-      total: Number(totalAmount)
+      total: Number(totalAmount),
+      release_date: releaseDate
     });
   };
 

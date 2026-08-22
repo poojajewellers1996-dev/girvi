@@ -277,8 +277,21 @@ def get_released_girvis(
         int_txs = [t for t in g.transactions if t.transaction_type == 'INTEREST_PAID']
         interest_amt = sum(t.amount for t in int_txs) if int_txs else 0.0
 
-        rel_date = int_txs[-1].transaction_date if int_txs else g.pledge_date
-        remarks_str = int_txs[-1].remarks if int_txs and int_txs[-1].remarks else "Released"
+        rel_date = getattr(g, 'release_date', None)
+        if not rel_date and g.transactions:
+            sorted_txs = sorted(g.transactions, key=lambda t: t.transaction_date or datetime.datetime.min)
+            rel_date = sorted_txs[-1].transaction_date
+
+        if not rel_date:
+            rel_date = g.pledge_date
+
+        remarks_str = "Released"
+        if int_txs and int_txs[-1].remarks:
+            remarks_str = int_txs[-1].remarks
+        elif g.transactions:
+            sorted_txs = sorted(g.transactions, key=lambda t: t.transaction_date or datetime.datetime.min)
+            if sorted_txs[-1].remarks:
+                remarks_str = sorted_txs[-1].remarks
 
         loan_amt = float(g.loan_amount or 0.0)
         tot_collected = loan_amt + interest_amt

@@ -6,7 +6,7 @@ import LedgerModal from '../components/LedgerModal';
 import ReleaseModal from '../components/ReleaseModal';
 import ImageLightbox from '../components/ImageLightbox';
 import { exportGirviLedger } from '../utils/exportUtils';
-import { formatDate } from '../utils/dateUtils';
+import { formatDate, toISOAtNoon } from '../utils/dateUtils';
 
 export default function Ledger() {
   const [girvis, setGirvis] = useState([]);
@@ -192,7 +192,7 @@ export default function Ledger() {
     }
   };
 
-  const handleReleaseConfirm = async ({ rate, months, interest, total }) => {
+  const handleReleaseConfirm = async ({ rate, months, interest, total, release_date }) => {
     if (!releaseGirvi) return;
     try {
       setReleaseLoading(true);
@@ -200,7 +200,8 @@ export default function Ledger() {
         rate,
         months,
         interest_amount: interest,
-        total_amount: total
+        total_amount: total,
+        release_date: release_date ? toISOAtNoon(release_date) : undefined
       });
       setReleaseGirvi(null);
       fetchGirvis();

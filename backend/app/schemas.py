@@ -218,6 +218,7 @@ class GirviRead(BaseModel):
     loan_amount_words: Optional[str] = None
     monthly_income: Optional[float] = None
     status: Optional[str] = "Active"
+    release_date: Optional[datetime] = None
     articles: List[ArticleRead] = []
     repledges: List[RepledgeSummary] = []
 
