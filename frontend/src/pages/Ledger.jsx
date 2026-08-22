@@ -31,7 +31,7 @@ export default function Ledger() {
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(25); // 25, 50, 100, 'ALL'
+  const [pageSize, setPageSize] = useState('ALL'); // Default to showing entire ledger
 
   // Sorting State
   const [sortField, setSortField] = useState('pledge_no'); // 'pledge_no' | 'pledge_date' | 'loan_amount' | 'present_value' | 'customer_name'
@@ -616,10 +616,10 @@ export default function Ledger() {
                   }}
                   style={{ margin: 0, padding: '0.25rem 0.5rem', fontSize: '0.85rem', width: 'auto' }}
                 >
-                  <option value={25}>25</option>
-                  <option value={50}>50</option>
-                  <option value={100}>100</option>
-                  <option value="ALL">All ({sortedGirvis.length})</option>
+                  <option value="ALL">All / Entire Ledger ({sortedGirvis.length})</option>
+                  <option value={25}>25 per page</option>
+                  <option value={50}>50 per page</option>
+                  <option value={100}>100 per page</option>
                 </select>
               </div>
 

@@ -26,7 +26,7 @@ export default function ReleaseLedger() {
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(25);
+  const [pageSize, setPageSize] = useState('ALL'); // Default to showing entire release ledger
 
   // Image Lightbox State
   const [lightbox, setLightbox] = useState(null);

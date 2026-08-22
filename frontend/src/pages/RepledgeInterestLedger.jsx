@@ -28,7 +28,7 @@ export default function RepledgeInterestLedger() {
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(25);
+  const [pageSize, setPageSize] = useState('ALL'); // Default to showing entire ledger
 
   const navigate = useNavigate();
 
