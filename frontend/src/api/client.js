@@ -99,6 +99,9 @@ export const api = {
     method: 'PATCH',
     body: JSON.stringify(data || {})
   }),
+  revertReleaseGirvi: (id) => request(`/girvi/${id}/revert-release`, {
+    method: 'PATCH'
+  }),
   partPaymentGirvi: (id, amount) => request(`/girvi/${id}/part-payment`, {
     method: 'PATCH',
     body: JSON.stringify({ amount })

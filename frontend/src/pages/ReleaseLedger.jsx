@@ -33,6 +33,8 @@ export default function ReleaseLedger() {
 
   const navigate = useNavigate();
 
+  const [actionLoading, setActionLoading] = useState(false);
+
   useEffect(() => {
     fetchReleasedGirvis();
   }, []);
@@ -46,6 +48,21 @@ export default function ReleaseLedger() {
       setError(err.message || 'Failed to fetch released Girvi records');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRevertRelease = async (girvi) => {
+    if (!window.confirm(`Are you sure you want to revert release for Pledge #${girvi.pledge_no}?\n\nThis item will return to Active status in the Girvi Ledger.`)) {
+      return;
+    }
+    try {
+      setActionLoading(true);
+      await api.revertReleaseGirvi(girvi.id);
+      fetchReleasedGirvis();
+    } catch (err) {
+      alert(err.message || 'Failed to revert release');
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -581,15 +598,36 @@ export default function ReleaseLedger() {
                     </td>
 
                     {/* Actions */}
-                    <td style={{ padding: '1rem', textAlign: 'center' }}>
-                      <button
-                        className="btn btn-secondary"
-                        style={{ padding: '0.45rem', color: 'var(--primary-color)' }}
-                        title="Print / View Release Bill"
-                        onClick={() => navigate(`/girvi/${girvi.id}/print`)}
-                      >
-                        <Printer size={16} />
-                      </button>
+                    <td style={{ padding: '1rem', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <button
+                          className="btn btn-secondary"
+                          style={{ padding: '0.45rem', color: 'var(--primary-color)' }}
+                          title="Print / View Release Bill"
+                          onClick={() => navigate(`/girvi/${girvi.id}/print`)}
+                        >
+                          <Printer size={16} />
+                        </button>
+                        <button
+                          className="btn btn-secondary"
+                          style={{ 
+                            padding: '0.45rem 0.65rem', 
+                            color: '#e11d48', 
+                            borderColor: '#fecdd3', 
+                            backgroundColor: '#fff1f2', 
+                            display: 'inline-flex', 
+                            alignItems: 'center', 
+                            gap: '0.35rem', 
+                            fontSize: '0.78rem', 
+                            fontWeight: 600 
+                          }}
+                          title="Revert Release (Move back to Girvi Ledger as Active)"
+                          onClick={() => handleRevertRelease(girvi)}
+                          disabled={actionLoading}
+                        >
+                          <RotateCcw size={14} /> Revert
+                        </button>
+                      </div>
                     </td>
 
                   </tr>

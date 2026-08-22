@@ -84,6 +84,11 @@ export default function Ledger() {
       if (!matchPledge && !matchName && !matchDate && !matchArticle && !matchRepledge) return false;
     }
 
+    // Exclude Released items from Girvi Ledger (Released items are exclusively listed in Release Ledger)
+    if ((g.status || 'Active') === 'Released') {
+      return false;
+    }
+
     // 2. Status filter
     if (statusFilter !== 'ALL' && (g.status || 'Active') !== statusFilter) {
       return false;

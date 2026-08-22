@@ -506,6 +506,19 @@ def release_girvi(
     log_system_action(db, "GIRVI_RELEASE", f"Released Girvi #{released.pledge_no} (Interest: ₹{interest_amount})", module="GIRVI")
     return schemas.GirviRead.model_validate(released)
 
+@app.patch("/girvi/{girvi_id}/revert-release", response_model=schemas.GirviRead)
+@app.post("/girvi/{girvi_id}/revert-release", response_model=schemas.GirviRead)
+def revert_release_girvi(
+    girvi_id: int,
+    db: Session = Depends(get_db),
+    token: dict = Depends(get_current_user),
+):
+    reverted = crud.revert_girvi_release(db, girvi_id=girvi_id)
+    if not reverted:
+        raise HTTPException(status_code=404, detail="Girvi not found")
+    log_system_action(db, "GIRVI_REVERT_RELEASE", f"Reverted release for Girvi #{reverted.pledge_no}. Returned to Active status.", module="GIRVI")
+    return schemas.GirviRead.model_validate(reverted)
+
 @app.patch("/girvi/{girvi_id}/part-payment", response_model=schemas.GirviRead)
 def part_payment_girvi(
     girvi_id: int,

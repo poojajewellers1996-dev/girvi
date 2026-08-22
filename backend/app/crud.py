@@ -334,6 +334,28 @@ def release_girvi_with_settlement(
     db.refresh(girvi)
     return girvi
 
+def revert_girvi_release(db: Session, girvi_id: int) -> Optional[Girvi]:
+    girvi = get_girvi(db, girvi_id)
+    if not girvi:
+        return None
+    
+    girvi.status = "Active"
+    girvi.release_date = None
+    
+    # Remove release settlement transactions if created upon release
+    release_txs = db.query(LedgerTransaction).filter(
+        LedgerTransaction.girvi_id == girvi_id
+    ).all()
+    
+    for tx in release_txs:
+        remarks_lower = (tx.remarks or "").lower()
+        if "upon release" in remarks_lower or "settlement" in remarks_lower:
+            db.delete(tx)
+            
+    db.commit()
+    db.refresh(girvi)
+    return girvi
+
 def part_payment_girvi(db: Session, girvi_id: int, amount: float):
     # Legacy - unused in UI, kept for compatibility if needed.
     girvi = get_girvi(db, girvi_id)
