@@ -311,6 +311,44 @@ def list_repledges(
 ):
     return [schemas.RepledgeRead.model_validate(r) for r in crud.list_repledges(db)]
 
+@app.get("/repledge/interest-ledger")
+@app.get("/repledge/interest-ledger/")
+def get_repledge_interest_ledger(
+    db: Session = Depends(get_db),
+    token: dict = Depends(get_current_user),
+):
+    repledges = crud.list_repledges(db)
+    ledger_items = []
+    for r in repledges:
+        girvi_list = [
+            {
+                "id": g.id,
+                "pledge_no": g.pledge_no,
+                "customer_name": g.customer_name,
+                "loan_amount": float(g.loan_amount or 0.0)
+            }
+            for g in r.girvis
+        ]
+        for t in r.transactions:
+            ledger_items.append({
+                "id": t.id,
+                "repledge_id": r.id,
+                "loan_number": r.loan_number,
+                "bank_name": r.bank_name,
+                "repledger_name": r.repledger_name,
+                "date_of_loan": r.date_of_loan,
+                "bank_amount": float(r.amount or 0.0),
+                "status": r.status,
+                "amount": float(t.amount or 0.0),
+                "payment_date": t.payment_date,
+                "remarks": t.remarks or "Bank Interest Payment",
+                "girvis": girvi_list
+            })
+
+    # Sort by payment date descending (most recent first)
+    ledger_items.sort(key=lambda x: x["payment_date"] if x["payment_date"] else datetime.datetime.min, reverse=True)
+    return ledger_items
+
 @app.post("/repledge/{repledge_id}/transactions", response_model=schemas.RepledgeTransactionRead)
 @app.post("/repledge/{repledge_id}/transactions/", response_model=schemas.RepledgeTransactionRead)
 def create_repledge_transaction(

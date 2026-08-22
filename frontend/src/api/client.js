@@ -107,6 +107,7 @@ export const api = {
     body: JSON.stringify({ amount })
   }),
   getRepledges: () => request('/repledge'),
+  getRepledgeInterestLedger: () => request('/repledge/interest-ledger'),
   getCustomerByMobile: (mobile) => request(`/customer/${encodeURIComponent(mobile)}`),
   getGirviStats: () => request('/girvi/stats'),
   

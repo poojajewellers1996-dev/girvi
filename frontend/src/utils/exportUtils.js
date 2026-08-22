@@ -148,3 +148,37 @@ export function exportInterestReport(repledges) {
   downloadCSV(filename, csvContent);
 }
 
+/**
+ * Export Repledge Interest Ledger to CSV / Excel
+ */
+export function exportRepledgeInterestLedger(items) {
+  const headers = [
+    'S.No',
+    'Loan Number',
+    'Bank Name',
+    'Repledger Name',
+    'Payment Date',
+    'Amount Paid (₹)',
+    'Remarks',
+    'Linked Customer Pledges'
+  ];
+
+  const rows = items.map((item, index) => {
+    const linkedPledges = item.girvis?.map(g => `${g.pledge_no} (${g.customer_name})`).join('; ') || '-';
+    return [
+      index + 1,
+      item.loan_number,
+      item.bank_name,
+      item.repledger_name || '-',
+      formatDate(item.payment_date),
+      item.amount || 0,
+      item.remarks || '-',
+      linkedPledges
+    ].map(escapeCSV).join(',');
+  });
+
+  const csvContent = [headers.map(escapeCSV).join(','), ...rows].join('\n');
+  const filename = `Repledge_Interest_Ledger_${new Date().toISOString().split('T')[0]}.csv`;
+  downloadCSV(filename, csvContent);
+}
+

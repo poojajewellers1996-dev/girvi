@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../api/client';
-import { Loader2, ChevronDown, ChevronUp, ExternalLink, Calendar, Landmark, Search, Plus, Trash2, IndianRupee, Unlock, CheckCircle, Clock, Download, Edit, X, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { Loader2, ChevronDown, ChevronUp, ExternalLink, Calendar, Landmark, Search, Plus, Trash2, IndianRupee, Unlock, CheckCircle, Clock, Download, Edit, X, ArrowUpDown, ArrowUp, ArrowDown, Receipt } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { exportBankRePledges, exportInterestReport } from '../utils/exportUtils';
 import { formatDate, toInputDateString, toISOAtNoon } from '../utils/dateUtils';
@@ -622,6 +622,14 @@ export default function RePledge() {
         </div>
 
         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          <button 
+            className="btn btn-secondary" 
+            onClick={() => navigate('/repledge-interest-ledger')}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem', borderColor: '#10b981', color: '#10b981', fontWeight: 600 }}
+            title="View date-wise interest ledger of all bank loans"
+          >
+            <Receipt size={16} /> Bank Interest Ledger
+          </button>
           <button 
             className="btn btn-secondary" 
             onClick={() => exportBankRePledges(filteredRepledges)}

@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { Diamond, LayoutDashboard, PlusCircle, FolderOpen, BookOpen, Repeat, ScrollText, Settings, X, Calculator, PackageCheck, CheckCircle2 } from 'lucide-react';
+import { Diamond, LayoutDashboard, PlusCircle, FolderOpen, BookOpen, Repeat, ScrollText, Settings, X, Calculator, PackageCheck, CheckCircle2, Receipt } from 'lucide-react';
 
 export default function Sidebar({ isOpen, setIsOpen }) {
   const navItems = [
@@ -9,6 +9,7 @@ export default function Sidebar({ isOpen, setIsOpen }) {
     { name: 'Release Ledger', path: '/release-ledger', icon: CheckCircle2 },
     { name: 'Stock Audit', path: '/stock-check', icon: PackageCheck },
     { name: 'Re-Pledge Girvi', path: '/re-pledge', icon: Repeat },
+    { name: 'Bank Interest Ledger', path: '/repledge-interest-ledger', icon: Receipt },
     { name: 'Calculator', path: '/calculator', icon: Calculator },
     { name: 'System Logs', path: '/logs', icon: ScrollText },
     { name: 'Settings', path: '/settings', icon: Settings },
