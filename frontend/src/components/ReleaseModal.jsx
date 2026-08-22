@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, CheckCircle, Calculator, IndianRupee, Loader2 } from 'lucide-react';
 
 export default function ReleaseModal({ girvi, onClose, onConfirm, loading }) {
@@ -66,21 +67,43 @@ export default function ReleaseModal({ girvi, onClose, onConfirm, loading }) {
     });
   };
 
-  return (
-    <div style={{
-      position: 'fixed', inset: 0,
-      background: 'rgba(15, 23, 42, 0.65)',
-      backdropFilter: 'blur(6px)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      zIndex: 1000, padding: '1rem',
-      animation: 'fadeIn 0.2s ease-out'
-    }}>
-      <div className="card" style={{
-        width: '100%', maxWidth: '480px',
-        padding: '1.5rem', borderRadius: '16px',
-        background: 'var(--bg-surface)',
-        boxShadow: 'var(--shadow-lg)'
-      }}>
+  return createPortal(
+    <div 
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: '100vw',
+        height: '100vh',
+        background: 'rgba(15, 23, 42, 0.75)',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 999999,
+        padding: '1rem',
+        animation: 'fadeIn 0.2s ease-out'
+      }}
+      onClick={onClose}
+    >
+      <div 
+        className="card" 
+        style={{
+          width: '100%',
+          maxWidth: '480px',
+          maxHeight: '90vh',
+          overflowY: 'auto',
+          padding: '1.5rem',
+          borderRadius: '16px',
+          background: 'var(--bg-surface)',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)',
+          border: '1px solid var(--border)'
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.75rem' }}>
           <div>
@@ -212,6 +235,7 @@ export default function ReleaseModal({ girvi, onClose, onConfirm, loading }) {
 
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, NotebookTabs, Trash2, Loader2 } from 'lucide-react';
 import { api } from '../api/client';
 
@@ -98,12 +99,16 @@ export default function LedgerModal({ girvi, onClose, onUpdate }) {
 
   const currentBalance = calculateBalance(transactions);
 
-  return (
+  return createPortal(
     <div
       style={{
-        position: 'fixed', inset: 0,
+        position: 'fixed',
+        top: 0, left: 0, right: 0, bottom: 0,
+        width: '100vw', height: '100vh',
         backgroundColor: 'rgba(15, 23, 42, 0.75)',
-        zIndex: 9999,
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
+        zIndex: 999999,
         display: 'flex', justifyContent: 'center', alignItems: 'center',
         padding: '1rem'
       }}
@@ -328,6 +333,7 @@ export default function LedgerModal({ girvi, onClose, onUpdate }) {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

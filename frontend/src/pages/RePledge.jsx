@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { api } from '../api/client';
 import { Loader2, ChevronDown, ChevronUp, ExternalLink, Calendar, Landmark, Search, Plus, Trash2, IndianRupee, Unlock, CheckCircle, Clock, Download, Edit, X, ArrowUpDown, ArrowUp, ArrowDown, Receipt } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -295,7 +296,7 @@ export default function RePledge() {
     <div className="animate-fade-in">
       
       {/* Edit Bank Loan Modal */}
-      {editModalData && (
+      {editModalData && createPortal(
         <div 
           onClick={() => setEditModalData(null)}
           style={{
@@ -306,13 +307,13 @@ export default function RePledge() {
             bottom: 0,
             width: '100vw',
             height: '100vh',
-            background: 'rgba(15, 23, 42, 0.7)',
+            background: 'rgba(15, 23, 42, 0.75)',
             backdropFilter: 'blur(8px)',
             WebkitBackdropFilter: 'blur(8px)',
             display: 'flex',
             alignItems: 'center',
-            justify: 'center',
-            zIndex: 99999,
+            justifyContent: 'center',
+            zIndex: 999999,
             padding: '1rem'
           }}
         >
@@ -327,7 +328,7 @@ export default function RePledge() {
               borderRadius: '16px',
               background: '#ffffff',
               color: '#0f172a',
-              boxShadow: '0 20px 40px rgba(0, 0, 0, 0.25)',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)',
               border: '1px solid #e2e8f0',
               animation: 'fadeIn 0.2s ease-out'
             }}
@@ -459,23 +460,24 @@ export default function RePledge() {
 
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
 
       {/* Release Bank Loan Modal */}
-      {releaseModalData && (
+      {releaseModalData && createPortal(
         <div 
           onClick={() => setReleaseModalData(null)}
           style={{
             position: 'fixed',
             top: 0, left: 0, right: 0, bottom: 0,
             width: '100vw', height: '100vh',
-            background: 'rgba(15, 23, 42, 0.7)',
+            background: 'rgba(15, 23, 42, 0.75)',
             backdropFilter: 'blur(8px)',
             WebkitBackdropFilter: 'blur(8px)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            zIndex: 99999, padding: '1rem'
+            zIndex: 999999, padding: '1rem'
           }}
         >
           <div 
@@ -485,7 +487,7 @@ export default function RePledge() {
               maxHeight: '90vh', overflowY: 'auto',
               padding: '1.5rem', borderRadius: '16px',
               background: '#ffffff', color: '#0f172a',
-              boxShadow: '0 20px 40px rgba(0, 0, 0, 0.25)',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)',
               border: '1px solid #e2e8f0',
               animation: 'fadeIn 0.2s ease-out'
             }}
@@ -499,30 +501,27 @@ export default function RePledge() {
                 <span style={{ fontSize: '0.8rem', color: '#64748b' }}>Bank: <strong>{releaseModalData.bank_name}</strong> | Repledger: <strong>{releaseModalData.repledger_name}</strong></span>
               </div>
               <button 
-                type="button"
                 onClick={() => setReleaseModalData(null)} 
-                style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', padding: '4px' }}
+                style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer' }}
               >
                 <X size={20} />
               </button>
             </div>
 
-            {/* Financial Summary Card */}
-            <div style={{ background: '#f8fafc', borderRadius: '12px', padding: '1rem', border: '1px solid #e2e8f0', marginBottom: '1.25rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
-              <div style={{ background: '#ecfdf5', padding: '0.75rem', borderRadius: '8px', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
-                <div style={{ fontSize: '0.725rem', fontWeight: 700, color: '#059669', textTransform: 'uppercase' }}>Principal Loan</div>
+            <div style={{ padding: '0.75rem 1rem', borderRadius: '8px', background: '#f8fafc', border: '1px solid #e2e8f0', marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>Bank Loan Amount</div>
                 <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#059669', marginTop: '2px' }}>₹{releaseModalData.amount?.toLocaleString('en-IN')}</div>
               </div>
-              <div style={{ background: '#fffbeb', padding: '0.75rem', borderRadius: '8px', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
-                <div style={{ fontSize: '0.725rem', fontWeight: 700, color: '#d97706', textTransform: 'uppercase' }}>Total Interest Paid</div>
-                <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#d97706', marginTop: '2px' }}>
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>Prior Interest Paid</div>
+                <div style={{ fontSize: '1rem', fontWeight: 700, color: '#f59e0b', marginTop: '2px' }}>
                   ₹{(releaseModalData.transactions?.reduce((sum, t) => sum + (Number(t.amount) || 0), 0) || 0).toLocaleString('en-IN')}
                 </div>
               </div>
             </div>
 
             <form onSubmit={handleReleaseSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              
               {/* Release Date */}
               <div className="input-group" style={{ margin: 0 }}>
                 <label htmlFor="rel_date" className="input-label">Release / Settlement Date</label>
@@ -537,9 +536,9 @@ export default function RePledge() {
                 />
               </div>
 
-              {/* Final Interest / Settlement Paid */}
+              {/* Final Settlement Interest */}
               <div className="input-group" style={{ margin: 0 }}>
-                <label htmlFor="rel_final_interest" className="input-label" style={{ color: '#d97706' }}>Final Interest Amount Paid to Bank (₹)</label>
+                <label htmlFor="rel_final_interest" className="input-label">Final Settlement Interest Paid at Release (₹)</label>
                 <input
                   id="rel_final_interest"
                   name="rel_final_interest"
@@ -549,7 +548,6 @@ export default function RePledge() {
                   onChange={(e) => setReleaseForm({ ...releaseForm, final_interest_paid: e.target.value })}
                   className="input-field"
                   placeholder="0 if no extra interest paid at release"
-                  style={{ fontWeight: 700, fontSize: '1rem', color: '#d97706' }}
                 />
               </div>
 
@@ -563,7 +561,7 @@ export default function RePledge() {
                   value={releaseForm.person_taking}
                   onChange={(e) => setReleaseForm({ ...releaseForm, person_taking: e.target.value })}
                   className="input-field"
-                  placeholder="e.g. Self / Owner / Ramesh (Agent)"
+                  placeholder="Owner / Customer / Person Name"
                   required
                 />
               </div>
@@ -571,26 +569,26 @@ export default function RePledge() {
               {/* Remarks */}
               <div className="input-group" style={{ margin: 0 }}>
                 <label htmlFor="rel_remarks" className="input-label">Release Remarks / Audit Note</label>
-                <input
+                <textarea
                   id="rel_remarks"
                   name="rel_remarks"
-                  type="text"
+                  rows={2}
                   value={releaseForm.remarks}
                   onChange={(e) => setReleaseForm({ ...releaseForm, remarks: e.target.value })}
                   className="input-field"
-                  placeholder="e.g. Closed loan from bank, items retrieved safely"
+                  placeholder="e.g. Bank loan closed and articles collected..."
                 />
               </div>
 
-              {/* Total Settlement Calculation Note */}
-              <div style={{ padding: '0.75rem', borderRadius: '8px', background: '#f1f5f9', border: '1px solid #cbd5e1', fontSize: '0.825rem', color: '#475569' }}>
+              {/* Total Settlement Calculation Card */}
+              <div style={{ padding: '0.75rem 1rem', borderRadius: '8px', background: 'rgba(139, 92, 246, 0.08)', border: '1px solid rgba(139, 92, 246, 0.2)', fontSize: '0.875rem' }}>
                 💰 <strong>Total Final Cost to Release Bank Loan:</strong>
-                <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#8b5cf6', marginTop: '4px' }}>
+                <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#8b5cf6', marginTop: '2px' }}>
                   ₹{((Number(releaseModalData.amount) || 0) + (Number(releaseForm.final_interest_paid) || 0)).toLocaleString('en-IN')}
                 </div>
               </div>
 
-              {/* Actions */}
+              {/* Action Buttons */}
               <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
                 <button
                   type="button"
@@ -604,7 +602,7 @@ export default function RePledge() {
                 <button
                   type="submit"
                   className="btn btn-primary"
-                  style={{ flex: 1, background: '#8b5cf6', color: '#ffffff' }}
+                  style={{ flex: 1, background: '#8b5cf6', color: '#ffffff', border: 'none' }}
                   disabled={actionLoading}
                 >
                   {actionLoading ? <Loader2 className="spin" size={18} /> : 'Confirm Bank Release'}
@@ -613,7 +611,8 @@ export default function RePledge() {
 
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Header Bar */}

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, ZoomIn, ZoomOut, RotateCw, RefreshCw } from 'lucide-react';
 
 export default function ImageLightbox({ src, title, onClose }) {
@@ -20,14 +21,17 @@ export default function ImageLightbox({ src, title, onClose }) {
 
   if (!src) return null;
 
-  return (
+  return createPortal(
     <div style={{
-      position: 'fixed', inset: 0,
+      position: 'fixed',
+      top: 0, left: 0, right: 0, bottom: 0,
+      width: '100vw', height: '100vh',
       background: 'rgba(15, 23, 42, 0.85)',
       backdropFilter: 'blur(8px)',
+      WebkitBackdropFilter: 'blur(8px)',
       display: 'flex', flexDirection: 'column',
       alignItems: 'center', justifyContent: 'center',
-      zIndex: 2000,
+      zIndex: 999999,
       animation: 'fadeIn 0.2s ease-out',
     }} onClick={onClose}>
       
@@ -91,6 +95,7 @@ export default function ImageLightbox({ src, title, onClose }) {
       <style>{`
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
       `}</style>
-    </div>
+    </div>,
+    document.body
   );
 }
