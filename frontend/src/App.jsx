@@ -16,6 +16,7 @@ import CalculatorPage from './pages/CalculatorPage';
 import StockCheck from './pages/StockCheck';
 import ReleaseLedger from './pages/ReleaseLedger';
 import RepledgeInterestLedger from './pages/RepledgeInterestLedger';
+import RepledgeReleaseLedger from './pages/RepledgeReleaseLedger';
 
 const PrivateRoute = ({ children }) => {
   const token = getAuthToken();
@@ -45,6 +46,7 @@ function App() {
             <Route path="ledger" element={<Ledger />} />
             <Route path="release-ledger" element={<ReleaseLedger />} />
             <Route path="re-pledge" element={<RePledge />} />
+            <Route path="repledge-release-ledger" element={<RepledgeReleaseLedger />} />
             <Route path="repledge-interest-ledger" element={<RepledgeInterestLedger />} />
             <Route path="stock-check" element={<StockCheck />} />
             <Route path="calculator" element={<CalculatorPage />} />

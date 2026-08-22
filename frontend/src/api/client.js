@@ -131,6 +131,10 @@ export const api = {
     method: 'PATCH',
     body: data ? JSON.stringify(data) : undefined
   }),
+  getReleasedRepledges: () => request('/repledge/released'),
+  revertReleaseRepledge: (id) => request(`/repledge/${id}/revert-release`, {
+    method: 'PATCH'
+  }),
 
   updateRepledge: (id, data) => request(`/repledge/${id}`, {
     method: 'PUT',

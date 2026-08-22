@@ -244,6 +244,25 @@ def update_repledge_status(db: Session, repledge_id: int, status: str):
         db.refresh(rep)
     return rep
 
+def revert_repledge_release(db: Session, repledge_id: int) -> Optional[Repledge]:
+    rep = db.query(Repledge).filter(Repledge.id == repledge_id).first()
+    if not rep:
+        return None
+    
+    rep.status = "Active"
+    
+    # Remove final settlement interest transaction if recorded at release
+    rel_txs = db.query(RepledgeTransaction).filter(
+        RepledgeTransaction.repledge_id == repledge_id
+    ).all()
+    for tx in rel_txs:
+        if tx.remarks and "final settlement interest" in tx.remarks.lower():
+            db.delete(tx)
+            
+    db.commit()
+    db.refresh(rep)
+    return rep
+
 def update_repledge(db: Session, repledge_id: int, data: schemas.RepledgeUpdate):
     rep = db.query(Repledge).filter(Repledge.id == repledge_id).first()
     if not rep:

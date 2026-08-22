@@ -11,7 +11,7 @@ from typing import List, Optional
 from fastapi import FastAPI, Depends, HTTPException, status, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from .config import settings, get_db, engine, Base
 from . import models, schemas, crud
@@ -405,6 +405,34 @@ def release_repledge(
 
     log_system_action(db, "REPLEDGE_RELEASE", log_msg, module="REPLEDGE")
     return schemas.RepledgeRead.model_validate(released)
+
+@app.get("/repledge/released", response_model=List[schemas.RepledgeRead])
+@app.get("/repledge/released/", response_model=List[schemas.RepledgeRead])
+def get_released_repledges(
+    db: Session = Depends(get_db),
+    token: dict = Depends(get_current_user),
+):
+    repledges = (
+        db.query(models.Repledge)
+        .options(selectinload(models.Repledge.girvis), selectinload(models.Repledge.transactions))
+        .filter(models.Repledge.status == "Released")
+        .order_by(models.Repledge.id.desc())
+        .all()
+    )
+    return [schemas.RepledgeRead.model_validate(r) for r in repledges]
+
+@app.patch("/repledge/{repledge_id}/revert-release", response_model=schemas.RepledgeRead)
+@app.post("/repledge/{repledge_id}/revert-release", response_model=schemas.RepledgeRead)
+def revert_repledge_release(
+    repledge_id: int,
+    db: Session = Depends(get_db),
+    token: dict = Depends(get_current_user),
+):
+    reverted = crud.revert_repledge_release(db, repledge_id)
+    if not reverted:
+        raise HTTPException(status_code=404, detail="Bank repledge not found")
+    log_system_action(db, "REPLEDGE_REVERT_RELEASE", f"Reverted release for Bank Loan #{reverted.loan_number} ({reverted.bank_name}). Status returned to Active.", module="REPLEDGE")
+    return schemas.RepledgeRead.model_validate(reverted)
 
 
 @app.put("/repledge/{repledge_id}", response_model=schemas.RepledgeRead)

@@ -235,6 +235,9 @@ export default function RePledge() {
 
 
   const filteredRepledges = repledges.filter(r => {
+    // Exclude Released bank loans from Active Re-Pledge Dashboard
+    if ((r.status || 'Active') === 'Released') return false;
+
     if (!searchTerm) return true;
     const term = searchTerm.toLowerCase();
     return (
@@ -622,6 +625,14 @@ export default function RePledge() {
         </div>
 
         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          <button 
+            className="btn btn-secondary" 
+            onClick={() => navigate('/repledge-release-ledger')}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem', borderColor: '#8b5cf6', color: '#8b5cf6', fontWeight: 600 }}
+            title="View released bank loans and revert release"
+          >
+            <CheckCircle size={16} /> Bank Release Ledger
+          </button>
           <button 
             className="btn btn-secondary" 
             onClick={() => navigate('/repledge-interest-ledger')}
